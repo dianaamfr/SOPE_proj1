@@ -6,22 +6,34 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-/* Função recursiva para devolver o tamanho dos diretórios
+/* -> COMPILAR E EXECUTAR (exemplos):
 
-   Sem usar forks (faz tudo no mesmo processo) percorre recursivamente os diretórios de um diretório passado como argumento.
+   gcc -Wall testingStatInfoRecursive.c -lm         ->  Para compilar é necessário colocar -lm  devido ao uso da função ceil() 
+   ./a.out . (mostra tamanho ocupado em disco do diretório atual)
+   ./a.out ..
+ 
+
+   ->DESCRIÇÃO
+
+   Função recursiva para devolver o tamanho dos diretórios.
+
+   Sem usar forks (faz tudo no mesmo processo) percorre recursivamente os diretórios de um diretório passado como argumento (argv[1]).
 
    Criei esta função com base nos exemplos da aula de diretórios e ficheiros e também de exemplos que encontrei na net.
    O meu objetivo era perceber onde podia ir buscar os valores que se obtém ao chamar o comando "du" na consola para um determinado diretório.
 
    Achei importante antes de começar a pensar na aplicação como multiprocesso perceber estes aspetos.
 
-   Assim, procurei que as funções permitessem implementar algumas das funcionalidades do comando "du", particularmente:
-   1) du -l <dir>
-   2) du -l <dir> -B 1
-   3) du -l <dir> -b 
+   Assim, procurei implementar algumas das funcionalidades do comando "du", particularmente:
+   (NOTA: VER COMPILAÇÃO pois é igual em todos os casos, sendo necessário apenas comentar o código da 
+   funcionalidade ativa e descomentar o código da que queremos ver (identificado com numeros))
+
+   1) du -l <dir>             -> mostra o espaço ocupado em disco pelo diretório e pelos seus subdiretórios em nº de blocos de 1024 bytes
+   2) du -l <dir> -B 1        -> "" em nº de blocos do sistema (4096 bytes)
+   3) du -l <dir> -b          -> "" em bytes
+   4) todas as funções anteriores com a opção -all (ou -a) que mostra também o espaço ocupado pelos ficheiros
 
    (Tentei ir buscar os valores tal como "du <dir>" devolvia na consola)
-   Estão comentadas com o respetivo número identificador as partes do código que permitem executar cada uma das funcionalidades.
 */
 
 long long dirSize(const char *name) {
@@ -36,50 +48,50 @@ long long dirSize(const char *name) {
    }
    if (S_ISDIR(stat_buf.st_mode)) { //no caso de o ficheiro ser um diretório
 
-   if ((dirp = opendir(name)) == NULL)
-         fprintf(stderr, "Could not open directory %s\n", name);
-   else {
-      //Soma o tamanho do próprio diretório
-      totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);  //1) du -l <dir>
-      //totalSize += stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);  //2) du -l <dir> -B 1
-      //totalSize += stat_buf.st_size; //3) du -l <dir> -b
+      if ((dirp = opendir(name)) == NULL)
+            fprintf(stderr, "Could not open directory %s\n", name);
+      else {
+         //Soma o tamanho do próprio diretório
+         totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);          //1) du -l <dir>
+         //totalSize += stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);                   //2) du -l <dir> -B 1
+         //totalSize += stat_buf.st_size;                                                                         //3) du -l <dir> -b
 
-      //enquanto o diretório tem conteúdos para ler
-      while ((direntp = readdir(dirp)) != NULL) {
-            char *pathname; //para guardar o path de cada ficheiro ou subdiretório
+         //enquanto o diretório tem conteúdos para ler
+         while ((direntp = readdir(dirp)) != NULL) {
+               char *pathname; //para guardar o path de cada ficheiro ou subdiretório
 
-            // ignore diretório corrente(".") e pai("..")
-            if (strcmp(direntp->d_name, ".") == 0 || strcmp(direntp->d_name, "..") == 0)
-               continue;
+               // ignore diretório corrente(".") e pai("..")
+               if (strcmp(direntp->d_name, ".") == 0 || strcmp(direntp->d_name, "..") == 0)
+                  continue;
 
-            pathname = malloc(strlen(name) + 1 + strlen(direntp->d_name) + 1);
-            if (pathname == NULL) {
-               fprintf(stderr, "Memory Allocation error\n");
-               exit(1);
-            }
+               pathname = malloc(strlen(name) + 1 + strlen(direntp->d_name) + 1);
+               if (pathname == NULL) {
+                  fprintf(stderr, "Memory Allocation error\n");
+                  exit(1);
+               }
+               
+               //guarda o path do ficheiro ou subdiretorio
+               sprintf(pathname, "%s/%s", name, direntp->d_name);
+               //soma o tamanho do subdiretorio ou ficheiro ao tamanho total fazendo uma chamada recursiva
+               totalSize += dirSize(pathname);
             
-            //guarda o path do ficheiro ou subdiretorio
-            sprintf(pathname, "%s/%s", name, direntp->d_name);
-            //soma o tamanho do subdiretorio ou ficheiro ao tamanho total fazendo uma chamada recursiva
-            totalSize += dirSize(pathname);
-         
-            free(pathname);
+               free(pathname);
+         }
+         closedir(dirp);
       }
-      closedir(dirp);
-   }
-   //a usar se só queremos mostrar na consola o tamanho dos diretórios
-   printf("%-10lld  %-10s\n", totalSize, name);
+      //a usar se só queremos mostrar na consola o tamanho dos diretórios
+      printf("%-10lld  %-10s\n", totalSize, name);
       
    }else{
       //se for um ficheiro regular soma o seu tamanho ao tamanho total do diretório
          
-      totalSize = ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024); //1) du -l <dir>
-      //totalSize = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize); //2) du -l <dir> -B 1
-      //totalSize = stat_buf.st_size; //3) du -l <dir> -b
+      totalSize = ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);              //1) du -l <dir>
+      //totalSize = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);                       //2) du -l <dir> -B 1
+      //totalSize = stat_buf.st_size;                                                                             //3) du -l <dir> -b
    }
     
    //a usar se também queremos mostrar na consola o tamanho dos ficheiros em bytes
-   //printf("%-10lld  %-10s\n", totalSize, name);
+   //printf("%-10lld  %-10s\n", totalSize, name);                                                                 //4) du .... -all
    return totalSize;
 }
 
