@@ -1,0 +1,501 @@
+<!DOCTYPE html><html><head>
+      <title>Report</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:////home/edurbrito/.vscode-oss/extensions/shd101wyy.markdown-preview-enhanced-0.5.2/node_modules/@shd101wyy/mume/dependencies/katex/katex.min.css">
+      
+      
+
+      
+      
+      
+      
+      
+      
+      
+
+      <style>
+      /**
+ * prism.js Github theme based on GitHub's theme.
+ * @author Sam Clarke
+ */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #333;
+  background: none;
+  font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.4;
+
+  -moz-tab-size: 8;
+  -o-tab-size: 8;
+  tab-size: 8;
+
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+  padding: .8em;
+  overflow: auto;
+  /* border: 1px solid #ddd; */
+  border-radius: 3px;
+  /* background: #fff; */
+  background: #f5f5f5;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+  padding: .1em;
+  border-radius: .3em;
+  white-space: normal;
+  background: #f5f5f5;
+}
+
+.token.comment,
+.token.blockquote {
+  color: #969896;
+}
+
+.token.cdata {
+  color: #183691;
+}
+
+.token.doctype,
+.token.punctuation,
+.token.variable,
+.token.macro.property {
+  color: #333;
+}
+
+.token.operator,
+.token.important,
+.token.keyword,
+.token.rule,
+.token.builtin {
+  color: #a71d5d;
+}
+
+.token.string,
+.token.url,
+.token.regex,
+.token.attr-value {
+  color: #183691;
+}
+
+.token.property,
+.token.number,
+.token.boolean,
+.token.entity,
+.token.atrule,
+.token.constant,
+.token.symbol,
+.token.command,
+.token.code {
+  color: #0086b3;
+}
+
+.token.tag,
+.token.selector,
+.token.prolog {
+  color: #63a35c;
+}
+
+.token.function,
+.token.namespace,
+.token.pseudo-element,
+.token.class,
+.token.class-name,
+.token.pseudo-class,
+.token.id,
+.token.url-reference .token.variable,
+.token.attr-name {
+  color: #795da3;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+.token.title,
+.token.title .token.punctuation {
+  font-weight: bold;
+  color: #1d3e81;
+}
+
+.token.list {
+  color: #ed6a43;
+}
+
+.token.inserted {
+  background-color: #eaffea;
+  color: #55a532;
+}
+
+.token.deleted {
+  background-color: #ffecec;
+  color: #bd2c00;
+}
+
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+
+/* JSON */
+.language-json .token.property {
+  color: #183691;
+}
+
+.language-markup .token.tag .token.punctuation {
+  color: #333;
+}
+
+/* CSS */
+code.language-css,
+.language-css .token.function {
+  color: #0086b3;
+}
+
+/* YAML */
+.language-yaml .token.atrule {
+  color: #63a35c;
+}
+
+code.language-yaml {
+  color: #183691;
+}
+
+/* Ruby */
+.language-ruby .token.function {
+  color: #333;
+}
+
+/* Markdown */
+.language-markdown .token.url {
+  color: #795da3;
+}
+
+/* Makefile */
+.language-makefile .token.symbol {
+  color: #795da3;
+}
+
+.language-makefile .token.variable {
+  color: #183691;
+}
+
+.language-makefile .token.builtin {
+  color: #0086b3;
+}
+
+/* Bash */
+.language-bash .token.keyword {
+  color: #0086b3;
+}
+
+/* highlight */
+pre[data-line] {
+  position: relative;
+  padding: 1em 0 1em 3em;
+}
+pre[data-line] .line-highlight-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: transparent;
+  display: block;
+  width: 100%;
+}
+
+pre[data-line] .line-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: inherit 0;
+  margin-top: 1em;
+  background: hsla(24, 20%, 50%,.08);
+  background: linear-gradient(to right, hsla(24, 20%, 50%,.1) 70%, hsla(24, 20%, 50%,0));
+  pointer-events: none;
+  line-height: inherit;
+  white-space: pre;
+}
+
+pre[data-line] .line-highlight:before, 
+pre[data-line] .line-highlight[data-end]:after {
+  content: attr(data-start);
+  position: absolute;
+  top: .4em;
+  left: .6em;
+  min-width: 1em;
+  padding: 0 .5em;
+  background-color: hsla(24, 20%, 50%,.4);
+  color: hsl(24, 20%, 95%);
+  font: bold 65%/1.5 sans-serif;
+  text-align: center;
+  vertical-align: .3em;
+  border-radius: 999px;
+  text-shadow: none;
+  box-shadow: 0 1px white;
+}
+
+pre[data-line] .line-highlight[data-end]:after {
+  content: attr(data-end);
+  top: auto;
+  bottom: .4em;
+}html body{font-family:"Helvetica Neue",Helvetica,"Segoe UI",Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ul,html body>ol{margin-bottom:16px}html body ul,html body ol{padding-left:2em}html body ul.no-list,html body ol.no-list{padding:0;list-style-type:none}html body ul ul,html body ul ol,html body ol ol,html body ol ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:bold;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:bold}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em !important;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::before,html body code::after{letter-spacing:-0.2em;content:"\00a0"}html body pre>code{padding:0;margin:0;font-size:.85em !important;word-break:normal;white-space:pre;background:transparent;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;font-size:.85em !important;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:before,html body pre tt:before,html body pre code:after,html body pre tt:after{content:normal}html body p,html body blockquote,html body ul,html body ol,html body dl,html body pre{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body pre,html body code{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview .pagebreak,.markdown-preview .newpage{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center !important}.markdown-preview:not([for="preview"]) .code-chunk .btn-group{display:none}.markdown-preview:not([for="preview"]) .code-chunk .status{display:none}.markdown-preview:not([for="preview"]) .code-chunk .output-div{margin-bottom:16px}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,0.66);border:4px solid rgba(150,150,150,0.66);background-clip:content-box}html body[for="html-export"]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for="html-export"]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0}@media screen and (min-width:914px){html body[for="html-export"]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for="html-export"]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for="html-export"]:not([data-presentation-mode]) .markdown-preview{font-size:14px !important;padding:1em}}@media print{html body[for="html-export"]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for="html-export"]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,0.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,0.66);border:4px solid rgba(150,150,150,0.66);background-clip:content-box}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc ul{padding:0 1.6em;margin-top:.8em}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc li{margin-bottom:.8em}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc ul{list-style-type:none}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% -  300px);padding:2em calc(50% - 457px -  150px);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for="html-export"]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for="html-export"]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+    </head>
+    <body for="html-export">
+      <div class="mume markdown-preview  ">
+      <h1 class="mume-header" id="sope-project">SOPE PROJECT</h1>
+
+<ul>
+<li><a href="#sope-project">SOPE PROJECT</a>
+<ul>
+<li><a href="#sum%c3%a1rio">Sum&#xE1;rio</a>
+<ul>
+<li><a href="#comando-du">Comando <code>du</code></a></li>
+<li><a href="#requisitos-funcionais">Requisitos Funcionais</a>
+<ul>
+<li><a href="#simpledu--l-path--a--b--b-size--l--s---max-depthn"><code>simpledu -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]</code></a></li>
+</ul>
+</li>
+<li><a href="#apresenta%c3%a7%c3%a3o-de-resultados">Apresenta&#xE7;&#xE3;o de resultados</a></li>
+<li><a href="#registologs">Registo/Logs</a>
+<ul>
+<li><a href="#instant-%e2%80%93-pid-%e2%80%93-action-%e2%80%93-info"><code>instant &#x2013; pid &#x2013; action &#x2013; info</code></a></li>
+</ul>
+</li>
+<li><a href="#interrup%c3%a7%c3%a3o-pelo-utilizador">Interrup&#xE7;&#xE3;o pelo utilizador</a></li>
+<li><a href="#requisitos-arquiteturais">Requisitos Arquiteturais</a></li>
+</ul>
+</li>
+<li><a href="#plano-de-trabalho">Plano de Trabalho</a></li>
+<li><a href="#testar">Testar</a></li>
+<li><a href="#tarefas">Tarefas</a></li>
+</ul>
+</li>
+</ul>
+<h2 class="mume-header" id="sum%C3%A1rio">Sum&#xE1;rio</h2>
+
+<blockquote>
+<p>Pretende-se desenvolver uma ferramenta para sumariar a utiliza&#xE7;&#xE3;o de espa&#xE7;o em disco de um ficheiro ou diret&#xF3;rio. No caso de um diret&#xF3;rio, a informa&#xE7;&#xE3;o a disponibilizar deve contemplar ficheiros e subdiret&#xF3;rios que, eventualmente, nele estejam contidos.</p>
+</blockquote>
+<p>A ferramenta a desenvolver ,<code>simpledu</code>, deve ter como refer&#xEA;ncia o comando <code>du</code> - <em>estimate file space usage</em>, o qual apresenta informa&#xE7;&#xE3;o sobre o espa&#xE7;o em disco utilizado por ficheiros e diret&#xF3;rios.</p>
+<p>Deve tentar-se reproduzir a informa&#xE7;&#xE3;o apresentada pelo comando <code>du</code> correntemente instalado. Por omiss&#xE3;o, o comando <code>du</code>:</p>
+<ul>
+<li>apresenta o espa&#xE7;o ocupado em n&#xFA;mero de blocos de 1024 bytes;</li>
+<li>apenas lista diret&#xF3;rios;</li>
+<li>n&#xE3;o segue links simb&#xF3;licos,contabiliza uma &#xFA;nica vez cada ficheiro;</li>
+<li>apresenta de forma cumulativa o tamanho de subdiret&#xF3;rios e ficheiros inclu&#xED;dos;</li>
+<li>n&#xE3;o restringe os n&#xED;veis de profundidade na estrutura de diret&#xF3;rios.</li>
+</ul>
+<p>Esta forma de opera&#xE7;&#xE3;o deve ser reproduzida pela ferramenta <code>simpledu</code>, mas considerando apenas um subconjunto das op&#xE7;&#xF5;es de invoca&#xE7;&#xE3;o disponibilizadas pelo comando du:</p>
+<ul>
+<li><code>-a , --all</code> &#x2013; a informa&#xE7;&#xE3;o exibida diz respeito tamb&#xE9;m a ficheiros;</li>
+<li><code>-b , --bytes</code> &#x2013; apresenta o n&#xFA;mero real de bytes de dados (ficheiros) ou alocados (diret&#xF3;rios);</li>
+<li><code>-B , --block-size=SIZE</code> &#x2013; define o tamanho (bytes) do bloco para efeitos de representa&#xE7;&#xE3;o;</li>
+<li><code>-l , --count-links</code> &#x2013; contabiliza m&#xFA;ltiplas vezes o mesmo ficheiro;</li>
+<li><code>-L , --dereference</code> &#x2013; segue links simb&#xF3;licos;</li>
+<li><code>-S , --separate-dirs</code> &#x2013; a informa&#xE7;&#xE3;o exibida n&#xE3;o inclui o tamanho dos subdiret&#xF3;rios;</li>
+<li><code>--max-depth=N</code> &#x2013; limita a informa&#xE7;&#xE3;o exibida a N (0,1, ...) n&#xED;veis de profundidade de diret&#xF3;rios.</li>
+</ul>
+<p>N&#xE3;o se pretende que seja mantido um registo dos ficheiros ou diret&#xF3;rios j&#xE1; processados (por exemplo, para evitar a sua contabiliza&#xE7;&#xE3;o por m&#xFA;ltiplas vezes ou para impedir a exist&#xEA;ncia de ciclos atrav&#xE9;s de links simb&#xF3;licos), por isso, <strong>deve ser assumido que a op&#xE7;&#xE3;o -l (ou --count-links) &#xE9; sempre usada.</strong></p>
+<blockquote>
+<p>NOTAS:</p>
+</blockquote>
+<blockquote>
+<ul>
+<li>Cada processo deve analisar somente um diret&#xF3;rio e &#xE9; respons&#xE1;vel por criar um processo por cada um dos subdiret&#xF3;rios que, eventualmente, nele possam estar contidos.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>O tamanho dos blocos usados num dado disco, dispon&#xED;vel no campo <code>st_blksize</code> da estrutura <code>stat (struct stat)</code>, pode ser tamb&#xE9;m obtido usando o comando <code>$ stat -f fich_dir</code></li>
+</ul>
+</blockquote>
+<h3 class="mume-header" id="comando-du">Comando <code>du</code></h3>
+
+<p><img src="../images/example_tree.png" alt><br>
+<img src="../images/example_du_usage.png" alt></p>
+<h3 class="mume-header" id="requisitos-funcionais">Requisitos Funcionais</h3>
+
+<h4 class="mume-header" id="simpledu-l-path-a-b-b-size-l-s-max-depthn"><code>simpledu -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]</code></h4>
+
+<p>Apesar de ser referida apenas uma alternativa por op&#xE7;&#xE3;o de invoca&#xE7;&#xE3;o, caso exista uma segunda, a implementa&#xE7;&#xE3;o da ferramenta deve suportar ambas (por exemplo, <code>-a ou --all</code>). Por quest&#xF5;es de simplicidade, n&#xE3;o &#xE9; requerido que m&#xFA;ltiplas op&#xE7;&#xF5;es possam ser especificadas usando um &#xFA;nico argumento (por exemplo, <code>-LabS</code>).</p>
+<p>O processo-pai (primeiro a ser executado) deve sempre aguardar pela termina&#xE7;&#xE3;o de todos os processos-filho antes de terminar a sua execu&#xE7;&#xE3;o (ver requisitos arquiteturais).</p>
+<h3 class="mume-header" id="apresenta%C3%A7%C3%A3o-de-resultados">Apresenta&#xE7;&#xE3;o de resultados</h3>
+
+<p>Ter em aten&#xE7;&#xE3;o a exist&#xEA;ncia de um car&#xE1;ter de tabula&#xE7;&#xE3;o entre o n&#xFA;mero de bytes ou blocos e o caminho para o ficheiro ou diret&#xF3;rio.<br>
+Exemplo:<br>
+<img src="../images/example_du_results.png" alt></p>
+<h3 class="mume-header" id="registologs">Registo/Logs</h3>
+
+<p>Criar e Usar a vari&#xE1;vel de ambiente <code>LOG_FILENAME</code> para guardar o path do ficheiro de logs que ser&#xE1; escrito por todos os processos.</p>
+<p>Qualquer um dos processos participantes na opera&#xE7;&#xE3;o do programa acede ao ficheiro, acrescentando-lhe informa&#xE7;&#xE3;o, linha a linha, no seguinte formato:</p>
+<h4 class="mume-header" id="instant-pid-action-info"><code>instant &#x2013; pid &#x2013; action &#x2013; info</code></h4>
+
+<ul>
+<li><strong>instant</strong> &#xE9; o instante de tempo imediatamente anterior ao registo, medido em milissegundos e<br>
+com 2 casas decimais, tendo como refer&#xEA;ncia o instante em que o programa come&#xE7;ou a executar;</li>
+<li><strong>pid</strong> &#xE9; o identificador do processo que faz o registo da linha, com espa&#xE7;o fixo para 8 algarismos;</li>
+<li><strong>action</strong> &#xE9; a descri&#xE7;&#xE3;o do tipo de evento: <code>CREATE, EXIT, RECV_SIGNAL, SEND_SIGNAL, RECV_PIPE, SEND_PIPE e ENTRY;</code></li>
+<li>info &#xE9; a informa&#xE7;&#xE3;o adicional para cada uma das a&#xE7;&#xF5;es:
+<ul>
+<li><strong>CREATE</strong> &#x2013; os argumentos da linha de comandos;</li>
+<li><strong>EXIT</strong> &#x2013; o c&#xF3;digo de sa&#xED;da (exit status);</li>
+<li><strong>RECV_SIGNAL</strong> &#x2013; o sinal recebido (por exemplo, SIGINT);</li>
+<li><strong>SEND_SIGNAL</strong> &#x2013; o sinal enviado seguido do pid do processo a quem se destina;</li>
+<li><strong>RECV_PIPE</strong> &#x2013; a mensagem enviada;</li>
+<li><strong>SEND_PIPE</strong> &#x2013; a mensagem recebida;</li>
+<li><strong>ENTRY</strong> &#x2013; n&#xFA;mero de bytes (ou blocos) seguido do caminho.</li>
+</ul>
+</li>
+</ul>
+<h3 class="mume-header" id="interrup%C3%A7%C3%A3o-pelo-utilizador">Interrup&#xE7;&#xE3;o pelo utilizador</h3>
+
+<p>Estando a ferramenta simpledu em execu&#xE7;&#xE3;o, quando for enviado o sinal <strong>SIGINT (CTRL+C)</strong>, todo o programa deve suspender a sua opera&#xE7;&#xE3;o, incluindo todos processos associados, e ser apresentada uma mensagem de confirma&#xE7;&#xE3;o ao utilizador para a termina&#xE7;&#xE3;o do mesmo. Caso o utilizador confirme a inten&#xE7;&#xE3;o de terminar o programa, devem ser terminadas quaisquer opera&#xE7;&#xF5;es que possam estar pendentes antes da sa&#xED;da; caso o utilizador pretenda continuar a execu&#xE7;&#xE3;o do programa, as opera&#xE7;&#xF5;es devem ser retomadas imediatamente.</p>
+<blockquote>
+<p>o processo-pai deve enviar um sinal <strong>SIGSTOP</strong> a todos os processos-filho que estiverem em execu&#xE7;&#xE3;o quando receber um sinal <strong>SIGINT</strong>; o envio do sinal seguinte depende da confirma&#xE7;&#xE3;o (<strong>SIGTERM</strong>) ou n&#xE3;o (<strong>SIGCONT</strong>) por parte do utilizador relativamente &#xE0; termina&#xE7;&#xE3;o do programa.</p>
+</blockquote>
+<h3 class="mume-header" id="requisitos-arquiteturais">Requisitos Arquiteturais</h3>
+
+<ul>
+<li>Cada um dos subdiret&#xF3;rios que, eventualmente, nele possam estar contidos; os argumentos que lhe s&#xE3;o passados devem ser ajustados para que o caminho (<code>path</code>) e o n&#xED;vel m&#xE1;ximo de profundidade (<code>--max-depth</code>) reflitam o pretendido;</li>
+<li>O processo-pai (primeiro a ser executado) deve sempre aguardar pela termina&#xE7;&#xE3;o de todos os processos-filho antes de terminar a sua execu&#xE7;&#xE3;o;</li>
+<li>usar o mesmo c&#xF3;digo (sem altera&#xE7;&#xF5;es) independentemente de ser ou n&#xE3;o o processo principal;</li>
+<li>o tamanho total de cada um dos subdiret&#xF3;rios deve ser comunicado ao processo-pai atrav&#xE9;s de um pipe (sem nome) criado para cada um dos processos-filho;</li>
+</ul>
+<h2 class="mume-header" id="plano-de-trabalho">Plano de Trabalho</h2>
+
+<blockquote>
+<p>Descrito nas especifica&#xE7;&#xF5;es do Projeto</p>
+</blockquote>
+<p>No sentido de tornar o desenvolvimento da ferramenta <code>simpledu</code> mais modular, &#xE9; sugerido que o desenvolvimento seja feito de acordo com os seguintes passos:</p>
+<ol>
+<li>Receber, processar e guardar os argumentos da linha de comandos e as vari&#xE1;veis de ambiente;</li>
+<li>Adicionar as mensagens de registo &#xE0; medida que forem implementadas novas funcionalidades e validar a corre&#xE7;&#xE3;o de ambas;</li>
+<li>Come&#xE7;ar por escolher apenas ficheiros e apresentar a informa&#xE7;&#xE3;o pretendida (bytes e blocos);
+<ol>
+<li>Considerar que a op&#xE7;&#xE3;o <code>-L (ou --dereference)</code> est&#xE1; ativa para n&#xE3;o ser necess&#xE1;rio distinguir links simb&#xF3;licos de ficheiros regulares.</li>
+</ol>
+</li>
+<li>Fazer a distin&#xE7;&#xE3;o entre ficheiros e links simb&#xF3;licos e apresentar resultados distintos em fun&#xE7;&#xE3;o da op&#xE7;&#xE3;o <code>-L</code>;</li>
+<li>Considerar entradas que sejam diret&#xF3;rios, mas limitar a an&#xE1;lise a um n&#xED;vel <code>(--max-depth=1)</code>;</li>
+<li>Criar um novo processo por subdiret&#xF3;rio e tentar passar-lhe os argumentos corretos;
+<ol>
+<li>Os argumentos ser&#xE3;o os mesmos exceto o caminho <code>(path/entry)</code> e, eventualmente, o n&#xED;vel m&#xE1;ximo de profundidade permitido <code>(--max-depth=N-1)</code>;</li>
+<li>Assumir que a op&#xE7;&#xE3;o <code>-S (ou --separate-dirs)</code> est&#xE1; ativa para que n&#xE3;o seja necess&#xE1;rio considerar cumulativamente o tamanho dos subdiret&#xF3;rios.</li>
+</ol>
+</li>
+<li>Criar pipes para comunicar o tamanho de um dado subdiret&#xF3;rio ao processo-pai e assim apresentar corretamente resultados cumulativos, incluindo para subdiret&#xF3;rios.</li>
+</ol>
+<h2 class="mume-header" id="testar">Testar</h2>
+
+<p>Considerando um teste T definido por um conjunto de argumentos <code>arg1, arg2, ..., argN</code>, o sucesso ou insucesso de um determinado teste ser&#xE1; determinado pelo seguinte conjunto de comandos:</p>
+<pre data-role="codeBlock" data-info="bash" class="language-bash">$ <span class="token punctuation">(</span>./simpledu <span class="token operator">&lt;</span>arg1 args2 <span class="token punctuation">..</span>. argN<span class="token operator">&gt;</span> <span class="token operator">||</span> <span class="token keyword">echo</span> <span class="token variable">$?</span><span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token function">sort</span> -k2 <span class="token operator">&gt;</span> testeT_simpledu.txt
+$ <span class="token punctuation">(</span>du <span class="token operator">&lt;</span>arg1 args2 <span class="token punctuation">..</span>. argN<span class="token operator">&gt;</span> <span class="token operator">||</span> <span class="token keyword">echo</span> <span class="token variable">$?</span><span class="token punctuation">)</span> <span class="token operator">|</span> <span class="token function">sort</span> -k2 <span class="token operator">&gt;</span> testeT_du.txt
+$ <span class="token function">diff</span> -q testeT_simpledu.txt testeT_du.txt <span class="token operator">&gt;</span> /dev/null 2<span class="token operator">&gt;</span><span class="token operator">&amp;</span>1 <span class="token operator">&amp;&amp;</span> <span class="token keyword">echo</span> OK <span class="token operator">||</span> <span class="token keyword">echo</span> FAILED
+</pre><blockquote>
+<p>O resultado ser&#xE1; OK ou FAILED.<br>
+Os argumentos <code>arg1 args2 ... argN</code>, obviamente, devem ser substitu&#xED;dos pelos argumentos pretendidos (por exemplo, <code>../my_test_folder/ -l -S</code>).</p>
+</blockquote>
+<h2 class="mume-header" id="tarefas">Tarefas</h2>
+
+<blockquote>
+<p>NOTA: As seguintes sugest&#xF5;es foram dadas por mim - Eduardo Brito - estando pendentes de revis&#xE3;o e modifica&#xE7;&#xE3;o.</p>
+</blockquote>
+<ol>
+<li>Criar um <code>Makefile</code> para o projeto e habilitar a sua utiliza&#xE7;&#xE3;o</li>
+<li>Criar o ficheiro <code>proj.c</code>
+<h4><code>simpledu -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]</code></h4>
+<ol>
+<li>
+<p>Fazer Parse dos argumentos da linha de comandos e vari&#xE1;vies de ambiente</p>
+</li>
+<li>
+<p>Com base nos respetivos argumentos, definir as tarefas a realizar</p>
+<ol>
+<li>Cada op&#xE7;&#xE3;o <em>ativa uma flag</em> numa <em>m&#xE1;scara</em> relacionada com as tarefas, e a fun&#xE7;&#xE3;o respons&#xE1;vel por obter a informa&#xE7;&#xE3;o dos ficheiros/diret&#xF3;rios recorre sempre a essa m&#xE1;scara para saber o que procurar e como procurar.<br>
+Exemplo para a <strong>m&#xE1;scara de bits</strong>:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>1</th>
+<th>X</th>
+<th>X</th>
+<th>X</th>
+<th>size</th>
+<th>X</th>
+<th>X</th>
+<th>max-depth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-l</td>
+<td>-a</td>
+<td>-b</td>
+<td>-B</td>
+<td>int</td>
+<td>-L</td>
+<td>-S</td>
+<td>int</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<ul>
+<li>X representa 1 ou 0 conforme a op&#xE7;&#xE3;o foi ativada ou n&#xE3;o pelo utilizador</li>
+<li>max-depth diminui ao entrar em cada subdiret&#xF3;rio</li>
+<li>existir&#xE1; tamb&#xE9;m uma vari&#xE1;vel para o path que muda ao entrar em cada subdiret&#xF3;rio</li>
+</ul>
+</blockquote>
+</li>
+<li>
+<p>Come&#xE7;ar a preparar uma fun&#xE7;&#xE3;o para registar os Logs de cada processo - <code>LOG_FILENAME</code> ser&#xE1; a vari&#xE1;vel de ambiente que guardar&#xE1; o nome do ficheiro.</p>
+</li>
+<li>
+<p>Criar e registar um Handler para <code>SIGINT</code> que trata da a&#xE7;&#xE3;o do utilizador quando &#xE9; recebido um <code>Ctrl-C</code></p>
+</li>
+</ol>
+<blockquote>
+<p>o processo-pai deve enviar um sinal <strong>SIGSTOP</strong> a todos os processos-filho que estiverem em execu&#xE7;&#xE3;o quando receber um sinal <strong>SIGINT</strong>; o envio do sinal seguinte depende da confirma&#xE7;&#xE3;o (<strong>SIGTERM</strong>) ou n&#xE3;o (<strong>SIGCONT</strong>) por parte do utilizador relativamente &#xE0; termina&#xE7;&#xE3;o do programa.</p>
+</blockquote>
+<ol start="5">
+<li>Na pasta <em>test</em> da ra&#xED;z deste reposit&#xF3;rio, criar um/v&#xE1;rios diret&#xF3;rio(s) com ficheiros e subdiret&#xF3;rios aleat&#xF3;rios, para ser poss&#xED;vel testar os resultados.</li>
+<li>Acrescentar ou modificar estas tarefas/sugest&#xF5;es</li>
+</ol>
+</li>
+</ol>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+    
+    
+  
+    </body></html>
