@@ -1,0 +1,15 @@
+Notas/ Estado de desenvolvimento:
+
+Para já, para testar as opções/flags no caso de tentarem colocar um path vai dar erro porque em checkArgs() a função devolve false se não for uma flag.
+
+A função validSize não foi ainda implmentada (retorna sempre true). Para a implementar é necessário perceber que tipo de SIZE podemos aceitar para as opções --max-depth=N e -B SIZE.
+
+-Para --max-depth=N N>=0
+
+-Para -B SIZE,
+"The SIZE argument is an integer and optional unit (example: 10K is
+10*1024).  Units are K,M,G,T,P,E,Z,Y (powers of 1024) or KB,MB,...
+(powers of 1000).  Binary prefixes can be used, too: KiB=K, MiB=M,
+and so on."
+
+ou seja, vamos ter que aceitar números e unidades
