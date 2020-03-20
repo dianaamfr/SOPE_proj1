@@ -8,8 +8,9 @@
  * defines. Doxygens tags are words preceeded by either a backslash @\
  * or by an at symbol @@.
  * @see http://fnch.users.sourceforge.net/doxygen_c.html
- * @see https://wiki.scilab.org/Doxygen%20documentation%20Examples
- * for more information.
+ * @see https://wiki.scilab.org/Doxygen%20documentation%20Examples for more information.
+ * @note Credits to the "Example of Parsing Long Options with getopt_long"
+ * @see checkArgs
  */
 
 #ifndef SIMPLEDU
@@ -47,6 +48,9 @@ typedef struct flagMask{
  * @param argv args passed
  * @param flags flagMask to be built
  * @return true if successful, false otherwise
+ * @note Lots of Credits to those who managed to give a very good explanation at 
+ * @see https://www.gnu.org/software/libc/manual/html_node/Getopt-Long-Option-Example.html
+ * @see https://linux.die.net/man/3/getopt_long for more info on the functions used
  */
 int checkArgs(int argc,char* argv[],flagMask *flags);
 
