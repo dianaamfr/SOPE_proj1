@@ -38,6 +38,7 @@ bool isFlag(char arg){
 */
 bool validSize(char size[]){
    /*TODO*/
+   if(isFlag(size[0])) return false;
    return true;
 }
 
@@ -80,6 +81,7 @@ bool activateFlag(flagMask *flags, char flag[], char n[]){
          else return false;
          break;
       default:
+         printf("default");
          return false;
    }
    return true;
