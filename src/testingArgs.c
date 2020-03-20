@@ -1,12 +1,35 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <getopt.h> 
-#include "simpledu.h"
+#include <string.h>
 
-int checkArgs(int argc, char* argv[], flagMask *flags){
-   
+#define OK 0
+#define ERRORARGS 1
+
+#define MAX_PATH 100 
+#define MAX_BLOCK_STR_SIZE 10 
+
+/**
+ * @brief Mask to save the active flags of simpledu.
+ *
+ * Firstly instantiated in main function, it will save the user options
+ * as well as the current path being search at any moment.
+ */
+typedef struct flagMask{
+  int  l;                                   /*< -l, --count-links */
+  int  a;                                   /*< -a, --all           -> write counts for all files, not just directories */
+  int  b;                                   /*< -b --bytes          -> show real size of data in bytes;*/
+  int  B;                                   /*< -B, --block-size    -> defines the size of each block (size) */
+  char size[MAX_BLOCK_STR_SIZE];            /*< size                -> size of the block in bytes */
+  int  L;                                   /*< -L, --dereference   -> dereference all symbolic links */
+  int  S;                                   /*< -S, --separate-dirs -> for directories: do not include size of subdirectories */
+  int  d;                                   /*< -d, --max-depth     -> print the total for a directory (or file, with --all) */
+  int  N;                                   /*< N                   -> only if it is N or fewer levels below the command line argument; */
+  char path[MAX_PATH];                      /*< pathname */
+} flagMask;
+
+int main(int argc, char *argv[]) {
    int c;
    int option_index = 0;
 
@@ -64,52 +87,52 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
       switch (c) {
 
          case 0:
-               // printf("option %s", long_options[option_index].name);
-               // if (optarg)
-               //    printf(" with arg %s", optarg);
-               // printf("\n");
+               printf("option %s", long_options[option_index].name);
+               if (optarg)
+                  printf(" with arg %s", optarg);
+               printf("\n");
                break;
 
          case 'a':
-               // printf("option a\n");
+               printf("option a\n");
                tempFlags.a = 1;
                break;
 
          case 'b':
-               // printf("option b\n");
+               printf("option b\n");
                tempFlags.b = 1;
                break;
 
          case 'B':
-               // printf("option (B) block-size with value '%s'\n", optarg);
+               printf("option (B) block-size with value '%s'\n", optarg);
                tempFlags.B = 1;
                strcpy(tempFlags.size,optarg);
                break;
 
          case 'l':
-               // printf("option l\n");
+               printf("option l\n");
                tempFlags.l = 1;
                break;
 
          case 'L':
-               // printf("option L\n");
+               printf("option L\n");
                tempFlags.L = 1;
                break;
 
          case 'S':
-               // printf("option S\n");
+               printf("option S\n");
                tempFlags.S = 1;
                break;
          
          case 'd':
-               // printf("option (d) max-depth with value '%s'\n", optarg);
+               printf("option (d) max-depth with value '%s'\n", optarg);
                tempFlags.d = 1;
                tempFlags.N = atoi(optarg);
                break;
 
          case '?':
                /* getopt_long already printed an error message. */
-               // printf("Exiting...\n");
+               printf("Exiting...\n");
                return ERRORARGS;
                break;
 
@@ -121,74 +144,42 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
    }
 
    if (optind < argc) {
-      // printf("non-option ARGV-elements: ");
+      printf("non-option ARGV-elements: ");
       while (optind < argc){
-         // printf("%s ", argv[optind]);
+         printf("%s ", argv[optind]);
          sprintf(tempFlags.path + strlen(tempFlags.path),"%s ",argv[optind++]);
       }
-      // printf("\n");
-      //printf("PATH IS %s\n",tempFlags.path);
+      printf("\n");
+      printf("PATH IS %s\n",tempFlags.path);
    }
 
-   flags->a = tempFlags.a;
-   flags->b = tempFlags.b;
-   flags->B = tempFlags.B;
-   flags->l = 1;
-   flags->L = tempFlags.L;
-   flags->S = tempFlags.S;
-   flags->d = tempFlags.d;
-   flags->N = tempFlags.N;
+      /* DEBUGGING ...*/
+   printf("###########################\n");
 
-   if(strcmp(tempFlags.size,"") == 0)
-      strcpy(flags->size,"1");
-   else
-      strcpy(flags->size, tempFlags.size);
-   
-   strcpy(flags->path, tempFlags.path);
+   printf("TESTING...\n");
+
+   printf("a: %d\n",tempFlags.a);
+
+   printf("b: %d\n",tempFlags.b);
+
+   printf("B: %d\n",tempFlags.B);
+
+   printf("l: %d\n",tempFlags.l);
+
+   printf("L: %d\n",tempFlags.L);
+
+   printf("S: %d\n",tempFlags.S);
+
+   printf("max-depth: %d",tempFlags.d);
+   if(tempFlags.d)
+      printf(" value=%d",tempFlags.N);
+   printf("\n");
+
+   printf("size: %s\n",tempFlags.size);
+
+   printf("path: %s\n",tempFlags.path);
+
+   printf("###########################\n");
    
    return OK;
 }
-
-int main(int argc, char* argv[],char* envp[]){
-
-   flagMask flags;
-
-   if(checkArgs(argc,argv,&flags) != OK){
-      printf("Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
-      exit(ERRORARGS);
-   }
-
-   /* DEBUGGING ...*/
-
-   printf("###########################\n");
-
-   printf("RUNNING...\n");
-
-   printf("a: %d\n",flags.a);
-
-   printf("b: %d\n",flags.b);
-
-   printf("B: %d\n",flags.B);
-
-   printf("l: %d\n",flags.l);
-
-   printf("L: %d\n",flags.L);
-
-   printf("S: %d\n",flags.S);
-
-   printf("max-depth: %d",flags.d);
-   if(flags.d)
-      printf(" value=%d",flags.N);
-   printf("\n");
-
-   printf("size: %s\n",flags.size);
-
-   printf("path: %s\n",flags.path);
-
-   printf("###########################\n");
-
-   /*...*/
-
-   exit(OK);
-}
-
