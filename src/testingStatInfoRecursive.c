@@ -79,6 +79,7 @@ long long dirSize(const char *name) {
          closedir(dirp);
       }
       //a usar se só queremos mostrar na consola o tamanho dos diretórios
+
       printf("%-10ld  %-10s\n", (long int)ceil((double)totalSize/5), name);
       
    }else{ /*du -l => conta o link mas não o ficheiro para onde ele aponta; Para du -l -L conta o link + o ficheiro para onde ela aponta => tirar */
@@ -86,6 +87,7 @@ long long dirSize(const char *name) {
       //totalSize = ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);              //1) du -l <dir>
       totalSize = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);                           //2) du -l <dir> -B 1
       int fileInBlocks = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);
+
       fileInBlocks = ceil((double)fileInBlocks/5);                                                                            
       //totalSize = stat_buf.st_size;                                                                               //4) du -l <dir> -b
       

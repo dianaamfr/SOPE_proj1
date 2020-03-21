@@ -5,7 +5,49 @@
 #include <getopt.h> 
 #include "simpledu.h"
 #include <math.h>
+#include <dirent.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
+
+long int checkBsize(char *optarg) {
+
+   int alphabet = 0, number = 0;
+   for (int i = 0; optarg[i] != '\0'; i++) {
+
+      if (isalpha(optarg[i])) alphabet++;
+
+      else if (isdigit(optarg[i])) number++;
+
+   }
+
+   if (alphabet != 0 && number !=0) return -1;
+
+   else if (number > 0 && alphabet == 0) return atoi(optarg);
+
+   else if (alphabet == 1 && number == 0) {
+      if (strcmp(optarg, "K") == 0) return 1024;
+      else if (strcmp(optarg, "M") == 0) return pow(1024,2);
+      else if (strcmp(optarg, "G") == 0) return pow(1024,3);
+      else if (strcmp(optarg, "T") == 0) return pow(1024,4);
+      else if (strcmp(optarg, "P") == 0) return pow(1024,5);
+      else if (strcmp(optarg, "E") == 0) return pow(1024,6);
+   }
+
+   else if (alphabet == 2 && number == 0) {
+      if (strcmp(optarg, "KB") == 0) return 1000;
+      else if (strcmp(optarg, "MB") == 0) return pow(1000,2);
+      else if (strcmp(optarg, "GB") == 0) return pow(1000,3);
+      else if (strcmp(optarg, "TB") == 0) return pow(1000,4);
+      else if (strcmp(optarg, "PB") == 0) return pow(1000,5);
+      else if (strcmp(optarg, "EB") == 0) return pow(1000,6);
+
+   }
+
+   else return -1;
+
+   return OK;
+}
 
 int validatePaths(char** path, char * stringPaths){
 
@@ -14,12 +56,13 @@ int validatePaths(char** path, char * stringPaths){
    if(strcmp(stringPaths, "") == OK){
       strcpy(path[0], ".");
       return OK;
-   } //checked
+   } 
+
 
    int  j = 0, k = 0;
-   for(int i = 0; i < MAX_NUM_PATHS; i++){
+   for(int i = 0; i < strlen(stringPaths); i++){
       if(stringPaths[i] == ' '||stringPaths[i] == '\0'){
-         path[i][j] = '\0';
+         path[k][j] = '\0';
          k++;  
          j = 0;
       }
@@ -60,6 +103,7 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
    
    int c;
    int option_index = 0;
+   long int size_b;
 
    static flagMask tempFlags;
    tempFlags.l = 1;
@@ -87,8 +131,8 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
       printf(" value=%d", tempFlags.N);
    printf("\n");
 
-   printf("size: %s\n", tempFlags.size);
-
+   printf("size: %ld\n",tempFlags.size);
+   
    printf("path: %s\n", tempFlags.path);
 
    printf("###########################\n");
@@ -121,6 +165,7 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
                // printf(" with arg %s", optarg);
             // printf("\n");
             break;
+
          case 'a':
             // printf("option a\n");
             tempFlags.a = 1;
@@ -131,10 +176,13 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
             tempFlags.b = 1;
             break;
 
+
          case 'B':
             // printf("option (B) block-size with value '%s'\n", optarg);
             tempFlags.B = 1;
-            strcpy(tempFlags.size, optarg);
+            size_b = checkBsize(optarg);
+            if (size_b == -1) return ERRORARGS;
+            tempFlags.size = size_b;
             break;
 
          case 'l':
@@ -189,11 +237,13 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
    flags->S = tempFlags.S;
    flags->d = tempFlags.d;
    flags->N = tempFlags.N;
+   flags->size = tempFlags.size;
 
-   if(strcmp(tempFlags.size, "") == 0)
-      strcpy(flags->size, "1");
+   /*if(strcmp(tempFlags.size,"") == 0)
+      strcpy(flags->size,"1");
    else
-      strcpy(flags->size, tempFlags.size);
+      strcpy(flags->size, tempFlags.size);*/
+   
    
    strcpy(flags->path, tempFlags.path);
    
@@ -203,11 +253,100 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
 int main(int argc, char* argv[], char* envp[]){
 
    flagMask flags;
-   
-   if(checkArgs(argc, argv, &flags) != OK){
-      printf("Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n", argv[0]);
+   DIR *dirp;
+   struct dirent *direntp;
+   struct stat stat_buf;
+   long totalSize = 0;
+
+
+   char ** paths = (char**)malloc(MAX_NUM_PATHS*sizeof(char*));;
+   for(int i = 0; i < MAX_NUM_PATHS; i++){
+      paths[i] = (char*)malloc(sizeof(char)*(MAX_PATH+1));
+      memset(paths[i], 0, sizeof(char)*(MAX_PATH+1));
+   }
+
+   if(checkArgs(argc,argv,&flags) != OK){
+      printf("Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
       exit(ERRORARGS);
    }
+
+   if (flags.d < 0 || flags.size < 0) {
+      exit(ERRORARGS);
+   }
+   
+
+   /*if (flags.a == 1) {
+
+      if (lstat(flags.path, &stat_buf)){ 
+         fprintf(stderr, "Stat error in %s\n", flags.path);
+         return 1;
+      }
+
+      if ((dirp = opendir(flags.path)) == NULL)
+            fprintf(stderr, "Could not open directory %s\n", flags.path);
+
+      while ((direntp = readdir( dirp)) != NULL) {
+
+         if (S_ISREG(stat_buf.st_mode)) {
+            long double temp = ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
+            printf("%ld  %-10s\n", temp, direntp->d_name);
+            totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
+         } 
+
+         else if (S_ISDIR(stat_buf.st_mode)) {
+            char *pathname;
+            pathname = malloc(strlen(flags.path) + 1 + strlen(direntp->d_name) + 1);
+            if (pathname == NULL) {
+               fprintf(stderr, "Memory Allocation error\n");
+               exit(1);
+            }
+            free(pathname);
+
+            if(strcmp(direntp->d_name,"..") != 0 || strcmp(direntp->d_name,".") == 0) {
+               totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
+               continue;
+            }
+         }
+      }
+
+      closedir(dirp);
+   }*/
+
+   /*if (flags.l) {
+      if (lstat(flags.path[0], &stat_buf)){ 
+         fprintf(stderr, "Stat error in %s\n", flags.path);
+         return 1;
+      }
+
+      if ((dirp = opendir(flags.path)) == NULL)
+            fprintf(stderr, "Could not open directory %s\n", flags.path);
+
+
+      while ((direntp = readdir( dirp)) != NULL) {
+
+         if (S_ISDIR(stat_buf.st_mode)) {
+            char *pathname;
+            pathname = malloc(strlen(flags.path[0]) + 1 + strlen(direntp->d_name) + 1);
+            if (pathname == NULL) {
+               fprintf(stderr, "Memory Allocation error\n");
+               exit(1);
+            }
+            free(pathname);
+
+            if(strcmp(direntp->d_name,"..") != 0 || strcmp(direntp->d_name,".") == 0) {
+               totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
+               continue;
+         }
+      }
+   }*/
+
+   /*if (flags.b || flags.a) {
+
+   }*/
+
+   /*if (flags.B) {
+
+   }*/
 
    /* DEBUGGING ...*/
 
@@ -232,7 +371,7 @@ int main(int argc, char* argv[], char* envp[]){
       printf(" value=%d", flags.N);
    printf("\n");
 
-   printf("size: %s\n", flags.size);
+   printf("size: %ld\n",flags.size);
 
    printf("path: %s\n", flags.path);
 
@@ -252,12 +391,78 @@ int main(int argc, char* argv[], char* envp[]){
    if(validatePaths(paths, flags.path) != OK) 
       exit(ERRORARGS);
 
-   for(int i = 0; i < MAX_NUM_PATHS && strcmp(paths[i], "") != OK; i++){
-      strcpy(flags.path, paths[i]);
 
-      if(lstat(flags.path, &stat_buf)){
-         fprintf(stderr, "Stat error in %s\n", flags.path);
-         exit(ERRORARGS);
+   for(int i = 0; i < MAX_NUM_PATHS && strcmp(paths[i],"") != OK; i++){
+      strcpy(flags.path,paths[i]);
+
+      if (flags.a == 1) {
+
+         if (lstat(flags.path, &stat_buf)){ 
+            fprintf(stderr, "Stat error in %s\n", flags.path);
+            return 1;
+         }
+
+         if (S_ISDIR(stat_buf.st_mode)) {
+
+
+            totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
+
+            if ((dirp = opendir(flags.path)) == NULL)
+               fprintf(stderr, "Could not open directory %s\n", flags.path);
+
+            while ((direntp = readdir(dirp)) != NULL) {
+
+               if (lstat(direntp->d_name, &stat_buf)){ 
+                  fprintf(stderr, "Stat error in %s\n", direntp->d_name);
+                  return 1;
+               }
+
+               if (S_ISREG(stat_buf.st_mode)) {
+
+                  char *pathname; //para guardar o path de cada ficheiro ou subdiretório
+
+                  pathname = malloc(strlen(flags.path) + 1 + strlen(direntp->d_name) + 1);
+
+                  if (pathname == NULL) {
+                     fprintf(stderr, "Memory Allocation error\n");
+                     exit(1);
+                  }
+               
+                  //guarda o path do ficheiro ou subdiretorio
+                  sprintf(pathname, "%s/%s", flags.path, direntp->d_name);
+
+                  long int temp = (int)ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
+                  printf("%-10ld  %-10s\n", temp, pathname);
+                  totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
+
+                  free(pathname);
+
+               }
+            }
+
+            printf("%ld\n", totalSize);
+            closedir(dirp);
+         }
+
+         else if (S_ISREG(stat_buf.st_mode)) {
+
+            printf("hello\n");
+
+            if (flags.b) {
+               totalSize = stat_buf.st_size;
+            }
+
+            else if (flags.B) {
+               totalSize = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);
+               totalSize = ceil((double)totalSize / flags.size);
+            }
+
+            else {
+               totalSize = (int)ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
+            }
+
+            printf("%-10ld  %-10s\n", totalSize, flags.path);
+         }
       }
    }
 

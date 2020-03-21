@@ -34,7 +34,7 @@ typedef struct flagMask{
   int  a;                                   /*< -a, --all           -> write counts for all files, not just directories */
   int  b;                                   /*< -b --bytes          -> show real size of data in bytes;*/
   int  B;                                   /*< -B, --block-size    -> defines the size of each block (size) */
-  char size[MAX_BLOCK_STR_SIZE];            /*< size                -> size of the block in bytes */
+  long int size;                            /*< size                -> size of the block in bytes */
   int  L;                                   /*< -L, --dereference   -> dereference all symbolic links */
   int  S;                                   /*< -S, --separate-dirs -> for directories: do not include size of subdirectories */
   int  d;                                   /*< -d, --max-depth     -> print the total for a directory (or file, with --all) */
@@ -60,7 +60,13 @@ int checkArgs(int argc, char* argv[], flagMask *flags);
  * @param path the name of the path
  * @return OK if path exists, ERRORARGS otherwise
 */
-int validatePaths(char* paths[], char stringPaths[]);
+int validatePaths(char ** paths, char *stringPaths);
+
+/**
+ * @brief Check if the size B
+ * @param oparg size of B
+*/
+long int checkBsize(char *optarg);
 
 /**
  * @brief Main function for simpledu command 
