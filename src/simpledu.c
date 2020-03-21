@@ -272,82 +272,6 @@ int main(int argc, char* argv[], char* envp[]){
    if (flags.d < 0 || flags.size < 0) {
       exit(ERRORARGS);
    }
-   
-
-   /*if (flags.a == 1) {
-
-      if (lstat(flags.path, &stat_buf)){ 
-         fprintf(stderr, "Stat error in %s\n", flags.path);
-         return 1;
-      }
-
-      if ((dirp = opendir(flags.path)) == NULL)
-            fprintf(stderr, "Could not open directory %s\n", flags.path);
-
-      while ((direntp = readdir( dirp)) != NULL) {
-
-         if (S_ISREG(stat_buf.st_mode)) {
-            long double temp = ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
-            printf("%ld  %-10s\n", temp, direntp->d_name);
-            totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
-         } 
-
-         else if (S_ISDIR(stat_buf.st_mode)) {
-            char *pathname;
-            pathname = malloc(strlen(flags.path) + 1 + strlen(direntp->d_name) + 1);
-            if (pathname == NULL) {
-               fprintf(stderr, "Memory Allocation error\n");
-               exit(1);
-            }
-            free(pathname);
-
-            if(strcmp(direntp->d_name,"..") != 0 || strcmp(direntp->d_name,".") == 0) {
-               totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
-               continue;
-            }
-         }
-      }
-
-      closedir(dirp);
-   }*/
-
-   /*if (flags.l) {
-      if (lstat(flags.path[0], &stat_buf)){ 
-         fprintf(stderr, "Stat error in %s\n", flags.path);
-         return 1;
-      }
-
-      if ((dirp = opendir(flags.path)) == NULL)
-            fprintf(stderr, "Could not open directory %s\n", flags.path);
-
-
-      while ((direntp = readdir( dirp)) != NULL) {
-
-         if (S_ISDIR(stat_buf.st_mode)) {
-            char *pathname;
-            pathname = malloc(strlen(flags.path[0]) + 1 + strlen(direntp->d_name) + 1);
-            if (pathname == NULL) {
-               fprintf(stderr, "Memory Allocation error\n");
-               exit(1);
-            }
-            free(pathname);
-
-            if(strcmp(direntp->d_name,"..") != 0 || strcmp(direntp->d_name,".") == 0) {
-               totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
-               continue;
-         }
-      }
-   }*/
-
-   /*if (flags.b || flags.a) {
-
-   }*/
-
-   /*if (flags.B) {
-
-   }*/
-
-   /* DEBUGGING ...*/
 
    printf("###########################\n");
 
@@ -376,16 +300,6 @@ int main(int argc, char* argv[], char* envp[]){
 
    printf("###########################\n");
 
-   /*...*/
-
-   struct stat stat_buf;
-
-   char ** paths = (char **) malloc(MAX_NUM_PATHS * sizeof(char *));
-
-   for(int i = 0; i < MAX_NUM_PATHS; i++){
-      paths[i] = (char *) malloc(sizeof(char) * (MAX_PATH + 1));
-      memset(paths[i], 0, sizeof(char) * (MAX_PATH + 1));
-   }
 
    if(validatePaths(paths, flags.path) != OK) 
       exit(ERRORARGS);
