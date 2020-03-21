@@ -48,22 +48,23 @@ typedef struct flagMask{
  * @param argc number of args passed
  * @param argv args passed
  * @param flags flagMask to be built
- * @return true if successful, false otherwise
+ * @return OK if successful, ERRORARGS otherwise
  * @note Lots of Credits to those who managed to give a very good explanation at 
  * @see https://www.gnu.org/software/libc/manual/html_node/Getopt-Long-Option-Example.html
  * @see https://linux.die.net/man/3/getopt_long for more info on the functions used
  */
-int checkArgs(int argc,char* argv[],flagMask *flags);
+int checkArgs(int argc, char* argv[], flagMask *flags);
 
 /**
  * @brief Check if the path exists
  * @param path the name of the path
+ * @return OK if path exists, ERRORARGS otherwise
 */
 int validatePaths(char* paths[], char stringPaths[]);
 
 /**
  * @brief Main function for simpledu command 
 */
-int main(int argc, char* argv[],char* envp[]);
+int main(int argc, char* argv[], char* envp[]);
 
 #endif
