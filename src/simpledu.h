@@ -60,6 +60,7 @@ int checkArgs(int argc, char* argv[], flagMask *flags);
  * @param path the name of the path
  * @return OK if path exists, ERRORARGS otherwise
 */
+
 int validatePaths(char ** paths, char *stringPaths);
 
 /**

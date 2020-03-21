@@ -56,8 +56,7 @@ int validatePaths(char** path, char * stringPaths){
    if(strcmp(stringPaths, "") == OK){
       strcpy(path[0], ".");
       return OK;
-   } 
-
+   }
 
    int  j = 0, k = 0;
    for(int i = 0; i < strlen(stringPaths); i++){
