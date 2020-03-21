@@ -7,7 +7,7 @@ begin:
 
 generate:
 		@echo "Creating ouput files..."
-		gcc simpledu.c -o simpledu -Wall
+		gcc simpledu.c -o simpledu -Wall -lm 
 
 run: begin generate
 		@echo "## Starting running ##"

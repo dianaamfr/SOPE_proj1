@@ -4,6 +4,57 @@
 #include <string.h>
 #include <getopt.h> 
 #include "simpledu.h"
+#include <math.h>
+#include <sys/stat.h>
+
+int validatePaths(char** path,char * stringPaths){
+
+   struct stat stat_buf;
+
+   if(strcmp(stringPaths, "") == OK){
+      strcpy(path[0],".");
+      return OK;
+   }//checked
+
+   int  j = 0, k = 0;
+   for(int i = 0; i < MAX_NUM_PATHS; i++){
+      if(stringPaths[i] == ' '||stringPaths[i] == '\0'){
+         path[i][j] = '\0';
+         k++;  
+         j = 0;
+      }
+      else{
+         path[k][j] = stringPaths[i];
+         j++;
+      }
+   }
+   
+   char ** tempPath = (char**)malloc(MAX_NUM_PATHS*sizeof(char*));
+   for(int i = 0; i < MAX_NUM_PATHS; i++){
+      tempPath[i] = (char*)malloc(sizeof(char)*(MAX_PATH+1));
+      memset(tempPath[i], 0, sizeof(char)*(MAX_PATH+1));
+   }
+
+   j = 0;
+   for(int i = 0; i < MAX_NUM_PATHS; i++){
+      if (lstat(path[i], &stat_buf) == OK){
+         strcpy(tempPath[j],path[i]);
+         j++;
+      }
+   }
+
+   if(strcmp(tempPath[0],"") == OK) return ERRORARGS;
+
+   for(int i = 0; i < MAX_NUM_PATHS; i++)
+      memset(path, 0, sizeof(char)*MAX_PATH);
+
+   memcpy(path,tempPath,MAX_NUM_PATHS*MAX_PATH*sizeof(char));
+   
+   
+   free(tempPath);
+   
+   return OK;   
+}
 
 int checkArgs(int argc, char* argv[], flagMask *flags){
    
@@ -58,69 +109,69 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
 
       c = getopt_long(argc, argv, "abB:lLSd:",long_options, &option_index);
 
-      if (c == -1)
+      if (c == -1){
          break;
+      }
 
       switch (c) {
 
          case 0:
-               // printf("option %s", long_options[option_index].name);
-               // if (optarg)
-               //    printf(" with arg %s", optarg);
-               // printf("\n");
-               break;
-
+            //printf("option %s", long_options[option_index].name);
+            //if (optarg)
+                  //printf(" with arg %s", optarg);
+            //printf("\n");
+            break;
          case 'a':
-               // printf("option a\n");
-               tempFlags.a = 1;
-               break;
+            // printf("option a\n");
+            tempFlags.a = 1;
+            break;
 
          case 'b':
-               // printf("option b\n");
-               tempFlags.b = 1;
-               break;
+            printf("option b\n");
+            tempFlags.b = 1;
+            break;
 
          case 'B':
-               // printf("option (B) block-size with value '%s'\n", optarg);
-               tempFlags.B = 1;
-               strcpy(tempFlags.size,optarg);
-               break;
+            // printf("option (B) block-size with value '%s'\n", optarg);
+            tempFlags.B = 1;
+            strcpy(tempFlags.size,optarg);
+            break;
 
          case 'l':
-               // printf("option l\n");
-               tempFlags.l = 1;
-               break;
+            // printf("option l\n");
+            tempFlags.l = 1;
+            break;
 
          case 'L':
-               // printf("option L\n");
-               tempFlags.L = 1;
-               break;
+            // printf("option L\n");
+            tempFlags.L = 1;
+            break;
 
          case 'S':
-               // printf("option S\n");
-               tempFlags.S = 1;
-               break;
+            // printf("option S\n");
+            tempFlags.S = 1;
+            break;
          
          case 'd':
-               // printf("option (d) max-depth with value '%s'\n", optarg);
-               tempFlags.d = 1;
-               tempFlags.N = atoi(optarg);
-               break;
+            // printf("option (d) max-depth with value '%s'\n", optarg);
+            tempFlags.d = 1;
+            tempFlags.N = atoi(optarg);
+            break;
 
          case '?':
-               /* getopt_long already printed an error message. */
-               // printf("Exiting...\n");
-               return ERRORARGS;
-               break;
+            /* getopt_long already printed an error message. */
+            //printf("Exiting...\n");
+            return ERRORARGS;
+            break;
 
          default:
-               printf("Error: getopt returned character code 0%o \n", c);
-               return ERRORARGS;
-               break;
+            printf("Error: getopt returned character code 0%o \n", c);
+            return ERRORARGS;
+            break;
         }
    }
 
-   if (optind < argc) {
+   if (optind < argc){
       // printf("non-option ARGV-elements: ");
       while (optind < argc){
          // printf("%s ", argv[optind]);
@@ -152,6 +203,12 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
 int main(int argc, char* argv[],char* envp[]){
 
    flagMask flags;
+   struct stat stat_buf;
+   char ** paths = (char**)malloc(MAX_NUM_PATHS*sizeof(char*));;
+   for(int i = 0; i < MAX_NUM_PATHS; i++){
+      paths[i] = (char*)malloc(sizeof(char)*(MAX_PATH+1));
+      memset(paths[i], 0, sizeof(char)*(MAX_PATH+1));
+   }
 
    if(checkArgs(argc,argv,&flags) != OK){
       printf("Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
@@ -189,6 +246,17 @@ int main(int argc, char* argv[],char* envp[]){
 
    /*...*/
 
+   if(validatePaths(paths,flags.path) != OK) exit(ERRORARGS);
+
+   for(int i = 0; i < MAX_NUM_PATHS && strcmp(paths[i],"") != OK; i++){
+      strcpy(flags.path,paths[i]);
+      if(lstat(flags.path,&stat_buf)){
+         fprintf(stderr, "Stat error in %s\n", flags.path);
+         return 1;
+      }
+   }
+
+   free(paths);
    exit(OK);
 }
 

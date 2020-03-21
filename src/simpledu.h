@@ -20,6 +20,7 @@
 #define ERRORARGS 1
 
 #define MAX_PATH 100 
+#define MAX_NUM_PATHS 5 
 #define MAX_BLOCK_STR_SIZE 10 
 
 /**
@@ -53,6 +54,12 @@ typedef struct flagMask{
  * @see https://linux.die.net/man/3/getopt_long for more info on the functions used
  */
 int checkArgs(int argc,char* argv[],flagMask *flags);
+
+/**
+ * @brief Check if the path exists
+ * @param path the name of the path
+*/
+int validatePaths(char* paths[], char stringPaths[]);
 
 /**
  * @brief Main function for simpledu command 

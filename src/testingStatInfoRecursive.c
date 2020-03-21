@@ -95,7 +95,7 @@ long long dirSize(const char *name) {
    return totalSize;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[],) {
    if (argc != 2){
       fprintf( stderr, "Usage: %s dir_name\n", argv[0]);
       return 1;
