@@ -18,6 +18,7 @@
 
 #define OK 0
 #define ERRORARGS 1
+#define ERROR_BSIZE -1
 
 #define MAX_PATH 100 
 #define MAX_NUM_PATHS 5 
@@ -61,7 +62,7 @@ int checkArgs(int argc, char* argv[], flagMask *flags);
  * @return OK if path exists, ERRORARGS otherwise
 */
 
-int validatePaths(char ** paths, char *stringPaths);
+int validatePath(char * path);
 
 /**
  * @brief Check if the size B
