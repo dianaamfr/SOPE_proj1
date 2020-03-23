@@ -7,7 +7,6 @@
 #include <math.h>
 #include <dirent.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <ctype.h>
 
 long int checkBsize(char *optarg) {
@@ -58,6 +57,35 @@ int validatePath(char * path){
   return ERRORARGS;
 }
 
+void printFlags(flagMask * flags, char * description){
+   printf("###########################\n");
+
+   printf("%s...\n",description);
+
+   printf("a: %d\n", flags->a);
+
+   printf("b: %d\n", flags->b);
+
+   printf("B: %d\n", flags->B);
+
+   printf("l: %d\n", flags->l);
+
+   printf("L: %d\n", flags->L);
+
+   printf("S: %d\n", flags->S);
+
+   printf("max-depth: %d", flags->d);
+   if(flags->d)
+      printf(" value=%d", flags->N);
+   printf("\n");
+
+   printf("size: %ld\n",flags->size);
+
+   printf("path: %s\n", flags->path);
+
+   printf("###########################\n");
+}
+
 int checkArgs(int argc, char* argv[], flagMask *flags){
    
    int c;
@@ -68,34 +96,7 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
    tempFlags.l = 1;
 
    /* DEBUGGING ...*/
-
-   printf("###########################\n");
-
-   printf("TESTING...\n");
-
-   printf("a: %d\n", tempFlags.a);
-
-   printf("b: %d\n", tempFlags.b);
-
-   printf("B: %d\n", tempFlags.B);
-
-   printf("l: %d\n", tempFlags.l);
-
-   printf("L: %d\n", tempFlags.L);
-
-   printf("S: %d\n", tempFlags.S);
-
-   printf("max-depth: %d", tempFlags.d);
-   if(tempFlags.d)
-      printf(" value=%d", tempFlags.N);
-   printf("\n");
-
-   printf("size: %ld\n",tempFlags.size);
-   
-   printf("path: %s\n", tempFlags.path);
-
-   printf("###########################\n");
-
+   printFlags(&tempFlags, "TESTING");
    /*...*/
    
    while(1){         
@@ -211,13 +212,79 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
    return OK;
 }
 
+long int regularFileSize(flagMask *flags, struct stat *stat_buf){
+   long int totalSize;
+
+   // -b || -B 1 -b || -b -B 1  => -b
+   if ((flags->b && !flags->B) || (flags->b && flags->B && flags->size == 1)){
+         totalSize = stat_buf->st_size;
+   }
+   else if (flags->B && !flags->b){ // TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
+      totalSize = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+      totalSize = ceil((double)totalSize / flags->size);
+   }
+   else{//du without options - default
+      totalSize = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
+   }
+
+   return totalSize;
+}
+
+long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf){
+   long int totalSize;
+   if ((flags->b && !flags->B) || (flags->b && flags->B && flags->size == 1)){ // -b || -B 1 -b || -b -B 1  => -b
+      totalSize = stat_buf->st_size; //count size of the link itself in bytes
+   }// TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
+   else{ //in blocks du ignores the size of symbolic links
+      totalSize = 0;
+   }
+   return totalSize;
+}
+
+long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname){
+   long int sizeBTemp = 0, size = 0;
+
+   if (S_ISREG(stat_buf->st_mode)) {//if it is a regular file
+      //calculate the space in disk of the regular file according to the active options
+      // -b || -B 1 -b || -b -B 1  => -b
+      if ((flags->b && !flags->B) || (flags->b && flags->B && flags->size == 1)){ // TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
+         size = stat_buf->st_size;
+      }
+      else if(flags->B && !flags->b){ // TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
+         size  = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+         sizeBTemp = size;
+         size  = ceil((double)size / flags->size);
+      }
+      else{ // du without options - default
+         size = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
+      }
+
+      //print all regular files if --all (-a) is active
+      if(flags->a) printf("%-8ld  %-10s\n", size, pathname);
+      //for -B option we want to show one size on screen but pass another to the total size calculation
+      if(flags->B && !flags->b) size = sizeBTemp;
+   }
+
+   else if(S_ISLNK(stat_buf->st_mode)){
+      if((flags->b && !flags->B) || (flags->b && flags->B && flags->size == 1)){// -b || -B 1 -b || -b -B 1  => -b
+         size = stat_buf->st_size; //count size of the link itself in bytes
+      }// TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
+      else{
+         size = 0; //in blocks du ignores the size of symbolic links
+      }
+      if(flags->a) printf("%-8ld  %-10s\n", size, pathname);
+   }
+
+   return size;
+}
+
 int main(int argc, char* argv[], char* envp[]){
 
    flagMask flags;
    DIR *dirp;
    struct dirent *direntp;
    struct stat stat_buf;
-   long totalSize = 0, tempSize = 0, sizeBTemp = 0;
+   long totalSize = 0, tempSize = 0;
 
    if(checkArgs(argc,argv,&flags) != OK){
       printf("Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
@@ -228,40 +295,13 @@ int main(int argc, char* argv[], char* envp[]){
       exit(ERRORARGS);
    }*/
 
-   printf("###########################\n");
-
-   printf("RUNNING...\n");
-
-   printf("a: %d\n", flags.a);
-
-   printf("b: %d\n", flags.b);
-
-   printf("B: %d\n", flags.B);
-
-   printf("l: %d\n", flags.l);
-
-   printf("L: %d\n", flags.L);
-
-   printf("S: %d\n", flags.S);
-
-   printf("max-depth: %d", flags.d);
-   if(flags.d)
-      printf(" value=%d", flags.N);
-   printf("\n");
-
-   printf("size: %ld\n",flags.size);
-
-   printf("path: %s\n", flags.path);
-
-   printf("###########################\n");
-
+   printFlags(&flags,"RUNNING");
 
    //check if the path exists
    if(validatePath(flags.path) != OK){
       fprintf(stderr, "Invalid path error in %s\n", flags.path);
       exit(ERRORARGS);
    } 
-      
 
    if (lstat(flags.path, &stat_buf)){ 
       fprintf(stderr, "Stat error in %s\n", flags.path);
@@ -310,65 +350,19 @@ int main(int argc, char* argv[], char* envp[]){
          /*TODO if is dir do the fork() and execute itself -> o prof sugeriu percorrer o conteudo do diretorio, encontrar os subdiretorios todos, fazer o fork para todos
           e depois voltar a percorrer o diretorio mas desta vez à procura de ficheiros regulares (se não me engano)*/
 
-         if (S_ISREG(stat_buf.st_mode)) {//if it is a regular file
+         if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
+            totalSize += dirFileSize(&flags,&stat_buf,pathname);
+         } 
 
-            //calculate the space in disk of the regular file according to the active options
-            // -b || -B 1 -b || -b -B 1  => -b
-            if ((flags.b && !flags.B) || (flags.b && flags.B && flags.size == 1)){ // TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
-               tempSize = stat_buf.st_size;
-            }
-            else if(flags.B && !flags.b){ // TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
-               tempSize  = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);
-               sizeBTemp = tempSize;
-               tempSize  = ceil((double)tempSize / flags.size);
-            }
-            else{ // du without options - default
-               tempSize = (int)ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
-            }
-
-            //print all regular files if --all (-a) is active
-            if(flags.a) printf("%-8ld  %-10s\n", tempSize, pathname);
-            //for -B option we want to show one size on screen but pass another to the total size calculation
-            if(flags.B && !flags.b) totalSize += sizeBTemp;
-            else totalSize += tempSize;
-         }
-
-         else if(S_ISLNK(stat_buf.st_mode)){
-            if((flags.b && !flags.B) || (flags.b && flags.B && flags.size == 1)){// -b || -B 1 -b || -b -B 1  => -b
-               tempSize = stat_buf.st_size; //count size of the link itself in bytes
-               totalSize += tempSize;
-               if(flags.a) printf("%-8ld  %-10s\n", tempSize, pathname);
-            }// TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
-            else{
-               tempSize = 0; //in blocks du ignores the size of symbolic links
-               if(flags.a) printf("%-8ld  %-10s\n", tempSize, pathname);
-            }
-         }
          free(pathname);
       }
       closedir(dirp);
    }
    else if (S_ISREG(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
-
-      if ((flags.b && !flags.B) || (flags.b && flags.B && flags.size == 1)){ // -b || -B 1 -b || -b -B 1  => -b
-         totalSize = stat_buf.st_size;
-      }
-      else if (flags.B && !flags.b){ // TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
-         totalSize = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);
-         totalSize = ceil((double)totalSize / flags.size);
-      }
-      else{//du without options - default
-         totalSize = (int)ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
-      }
+      totalSize = regularFileSize(&flags,&stat_buf);
    }
    else if (S_ISLNK(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
-
-      if ((flags.b && !flags.B) || (flags.b && flags.B && flags.size == 1)){ // -b || -B 1 -b || -b -B 1  => -b
-         totalSize = stat_buf.st_size; //count size of the link itself in bytes
-      }// TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
-      else{ //in blocks du ignores the size of symbolic links
-         totalSize = 0;
-      }
+      totalSize = symbolicLinkSize(&flags,&stat_buf);
    }
 
    //for -B size with size > 1 we do the calculation as in -B 1 and compute totalSize in the end by dividing the total by the size specified
