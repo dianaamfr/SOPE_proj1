@@ -232,12 +232,27 @@ long int regularFileSize(flagMask *flags, struct stat *stat_buf){
 
 long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf){
    long int totalSize;
+
+   
    if ((flags->b && !flags->B) || (flags->b && flags->B && flags->size == 1)){ // -b || -B 1 -b || -b -B 1  => -b
       totalSize = stat_buf->st_size; //count size of the link itself in bytes
    }// TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
-   else{ //in blocks du ignores the size of symbolic links
-      totalSize = 0;
+   else{ 
+      if(!flags->L){
+         totalSize = 0;
+      }
+      else{ //dereference symbolic links
+         if (flags->B && !flags->b){ // TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
+            totalSize = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+            totalSize = ceil((double)totalSize / flags->size);
+         }
+         else{//du without options - default
+            totalSize = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
+         }
+      }
+      
    }
+   
    return totalSize;
 }
 
@@ -258,22 +273,34 @@ long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname){
       else{ // du without options - default
          size = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
       }
-
-      //print all regular files if --all (-a) is active
-      if(flags->a) printf("%-8ld  %-10s\n", size, pathname);
-      //for -B option we want to show one size on screen but pass another to the total size calculation
-      if(flags->B && !flags->b) size = sizeBTemp;
    }
 
    else if(S_ISLNK(stat_buf->st_mode)){
       if((flags->b && !flags->B) || (flags->b && flags->B && flags->size == 1)){// -b || -B 1 -b || -b -B 1  => -b
          size = stat_buf->st_size; //count size of the link itself in bytes
       }// TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
-      else{
-         size = 0; //in blocks du ignores the size of symbolic links
+      else{ 
+         if(!flags->L){
+            size = 0;
+         }
+         else{ //dereference symbolic links
+            if (flags->B && !flags->b){ // TODO we still need to check options order for -B SIZE (with SIZE != 1) and -b at the same time
+               size  = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+               sizeBTemp = size;
+               size  = ceil((double)size / flags->size);
+            }
+            else{//du without options - default
+               size = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
+            }
+         }
+         
       }
-      if(flags->a) printf("%-8ld  %-10s\n", size, pathname);
    }
+
+   //print all regular files if --all (-a) is active
+   if(flags->a) printf("%-8ld  %-10s\n", size, pathname);
+   //for -B option we want to show one size on screen but pass another to the total size calculation
+   if(flags->B && !flags->b) size = sizeBTemp;
 
    return size;
 }
@@ -303,10 +330,19 @@ int main(int argc, char* argv[], char* envp[]){
       exit(ERRORARGS);
    } 
 
-   if (lstat(flags.path, &stat_buf)){ 
+   if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
+      if (lstat(flags.path, &stat_buf)){ 
+         fprintf(stderr, "Stat error in %s\n", flags.path);
+         return 1;
+      }
+   }
+   else{ //use stat to follow symbolic links - dereference the link
+      if (stat(flags.path, &stat_buf)){ 
       fprintf(stderr, "Stat error in %s\n", flags.path);
       return 1;
+      }
    }
+   
 
    //if the user asks for the size of a directory
    if (S_ISDIR(stat_buf.st_mode)) {
@@ -357,6 +393,11 @@ int main(int argc, char* argv[], char* envp[]){
          free(pathname);
       }
       closedir(dirp);
+
+      //for -B size with size > 1 we do the calculation as in -B 1 and compute totalSize in the end by dividing the total by the size specified
+      if(flags.B && !flags.b){
+         totalSize  = ceil((double)totalSize / flags.size);
+      }
    }
    else if (S_ISREG(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
       totalSize = regularFileSize(&flags,&stat_buf);
@@ -365,8 +406,6 @@ int main(int argc, char* argv[], char* envp[]){
       totalSize = symbolicLinkSize(&flags,&stat_buf);
    }
 
-   //for -B size with size > 1 we do the calculation as in -B 1 and compute totalSize in the end by dividing the total by the size specified
-   if(flags.B && !flags.b) totalSize  = ceil((double)totalSize / flags.size);
    //print the size of the directory or regular file
    printf("%-8ld  %-10s\n", totalSize, flags.path);
 
