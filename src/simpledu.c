@@ -13,12 +13,18 @@ long int checkBsize(char *optarg) {
 
    int alphabet = 0, number = 0;
    for (int i = 0; optarg[i] != '\0'; i++) {
-      if (isalpha(optarg[i])) alphabet++;
-      else if (isdigit(optarg[i])) number++;
+      if (isalpha(optarg[i])) 
+         alphabet++;
+      else if (isdigit(optarg[i])) 
+         number++;
    }
 
-   if (alphabet != 0 && number != 0) return ERROR_BSIZE;
-   else if (number > 0 && alphabet == 0 && strcmp(optarg, "0") != 0) return atoi(optarg);
+   if (alphabet != 0 && number != 0) 
+      return ERROR_BSIZE;
+   
+   else if (number > 0 && alphabet == 0 && strcmp(optarg, "0") != 0) 
+      return atoi(optarg);
+
    else if (alphabet == 1 && number == 0) {
       if (strcmp(optarg, "K") == 0) return 1024;
       else if (strcmp(optarg, "M") == 0) return pow(1024,2);
@@ -26,7 +32,8 @@ long int checkBsize(char *optarg) {
       else if (strcmp(optarg, "T") == 0) return pow(1024,4);
       else if (strcmp(optarg, "P") == 0) return pow(1024,5);
       else if (strcmp(optarg, "E") == 0) return pow(1024,6);
-      else return ERROR_BSIZE;
+      else 
+         return ERROR_BSIZE;
    }
    else if (alphabet == 2 && number == 0) {
       if (strcmp(optarg, "KB") == 0) return 1000;
@@ -53,8 +60,10 @@ int validatePath(char * path){
       return OK;
    }
 
-  if(lstat(path, &stat_buf) == OK) return OK;
-  return ERRORARGS;
+   if(lstat(path, &stat_buf) == OK) 
+      return OK;
+   
+   return ERRORARGS;
 }
 
 void printFlags(flagMask * flags, char * description){
@@ -224,6 +233,7 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
 }
 
 long int regularFileSize(flagMask *flags, struct stat *stat_buf){
+   
    long int totalSize;
 
    // -b || -B 1 -b || -b -B 1  => -b
@@ -231,7 +241,7 @@ long int regularFileSize(flagMask *flags, struct stat *stat_buf){
       totalSize = stat_buf->st_size;
    }
    else if (flags->B && !flags->b){
-      totalSize = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+      totalSize = stat_buf->st_blksize * ceil((double)stat_buf->st_size/stat_buf->st_blksize);
       totalSize = ceil((double)totalSize / flags->size);
    }
    else if(flags->B && flags->b){ // -b -B SIZE with SIZE > 1
@@ -239,15 +249,15 @@ long int regularFileSize(flagMask *flags, struct stat *stat_buf){
       totalSize = ceil((double)totalSize / flags->size);
    }
    else{//du without options - default
-      totalSize = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
+      totalSize = (int) ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
    }
 
    return totalSize;
 }
 
 long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf){
-   long int totalSize;
 
+   long int totalSize;
    
    if (flags->b && !flags->B){ // -b || -B 1 -b || -b -B 1  => -b
       totalSize = stat_buf->st_size; //count size of the link itself in bytes
@@ -280,6 +290,7 @@ long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf){
 }
 
 long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname){
+   
    long int sizeBTemp = 0, size = 0;
 
    if (S_ISREG(stat_buf->st_mode)){//if it is a regular file
@@ -371,13 +382,13 @@ int main(int argc, char* argv[], char* envp[]){
    if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
       if (lstat(flags.path, &stat_buf)){ 
          fprintf(stderr, "Stat error in %s\n", flags.path);
-         return 1;
+         return ERRORARGS;
       }
    }
    else{ //use stat to follow symbolic links - dereference the link
       if (stat(flags.path, &stat_buf)){ 
-      fprintf(stderr, "Stat error in %s\n", flags.path);
-      return 1;
+         fprintf(stderr, "Stat error in %s\n", flags.path);
+         return ERRORARGS;
       }
    }
    
@@ -445,9 +456,11 @@ int main(int argc, char* argv[], char* envp[]){
          totalSize  = ceil((double)totalSize / flags.size);
       }
    }
+
    else if (S_ISREG(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
       totalSize = regularFileSize(&flags,&stat_buf);
    }
+
    else if (S_ISLNK(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
       totalSize = symbolicLinkSize(&flags,&stat_buf);
    }
