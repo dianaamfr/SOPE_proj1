@@ -42,19 +42,18 @@ long long dirSize(const char *name) {
    struct stat stat_buf;
    long long totalSize = 0; //para guardar o tamanho total em disco ocupado pelo diretório passado nos argumentos
 
-   if (lstat(name, &stat_buf)) { //don't follow symbolic links (para a opção -L provavelmente temos que mudar algo aqui)
+   if (lstat(name, &stat_buf)){ //don't follow symbolic links
       fprintf(stderr, "Stat error in %s\n", name);
       return 1;
    }
    if (S_ISDIR(stat_buf.st_mode)) { //no caso de o ficheiro ser um diretório
-
       if ((dirp = opendir(name)) == NULL)
             fprintf(stderr, "Could not open directory %s\n", name);
       else {
          //Soma o tamanho do próprio diretório
-         totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);          //1) du -l <dir>
-         //totalSize += stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);                   //2) du -l <dir> -B 1
-         //totalSize += stat_buf.st_size;                                                                         //3) du -l <dir> -b
+         //totalSize += ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);          //1) du -l <dir>
+         totalSize += stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);                        //2) du -l <dir> -B 1
+         //totalSize += stat_buf.st_size;                                                                           //4) du -l <dir> -b
 
          //enquanto o diretório tem conteúdos para ler
          while ((direntp = readdir(dirp)) != NULL) {
@@ -80,28 +79,31 @@ long long dirSize(const char *name) {
          closedir(dirp);
       }
       //a usar se só queremos mostrar na consola o tamanho dos diretórios
-      printf("%-10lld  %-10s\n", totalSize, name);
+
+      printf("%-10ld  %-10s\n", (long int)ceil((double)totalSize/5), name);
       
-   }else{
+   }else{ /*du -l => conta o link mas não o ficheiro para onde ele aponta; Para du -l -L conta o link + o ficheiro para onde ela aponta => tirar */
       //se for um ficheiro regular soma o seu tamanho ao tamanho total do diretório
-         
-      totalSize = ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);              //1) du -l <dir>
-      //totalSize = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);                       //2) du -l <dir> -B 1
-      //totalSize = stat_buf.st_size;                                                                             //3) du -l <dir> -b
+      //totalSize = ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);              //1) du -l <dir>
+      totalSize = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);                           //2) du -l <dir> -B 1
+      int fileInBlocks = stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize);
+
+      fileInBlocks = ceil((double)fileInBlocks/5);                                                                            
+      //totalSize = stat_buf.st_size;                                                                               //4) du -l <dir> -b
+      
+      printf("%-10d  %-10s\n", fileInBlocks, name);                                                                  //du .... -all                                                                
    }
     
-   //a usar se também queremos mostrar na consola o tamanho dos ficheiros em bytes
-   //printf("%-10lld  %-10s\n", totalSize, name);                                                                 //4) du .... -all
    return totalSize;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[],) {
    if (argc != 2){
       fprintf( stderr, "Usage: %s dir_name\n", argv[0]);
       return 1;
    }
 
    dirSize(argv[1]); 
-   
+
    return 0;
 }
