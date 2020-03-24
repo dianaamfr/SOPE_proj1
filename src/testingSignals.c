@@ -35,6 +35,7 @@ void sigHandler(int signo){
 
 int main(void){
     int pid, ppid = getppid();
+    setenv("LOG_QQCOISA","QQ COISINHA",1);
 
     struct sigaction action;
     action.sa_handler = sigHandler;
@@ -64,7 +65,7 @@ int main(void){
     if(pid == 0){
         int count = 0;
         while(1){
-            printf("Child   -- %d -- %d ---- count= %d\n",getpid(),getppid(),count); 
+            printf("Child   -- %d -- %d ---- count= %d  ## ENVAR = %s\n",getpid(),getppid(),count,getenv("LOG_QQCOISA")); 
             sleep(3);
             count++;
         }
