@@ -57,16 +57,17 @@ int main(void){
 
     printf("I AM THE PARENT -- %d -- %d\n",getpid(),getppid());
 
-    pid = fork();
+    for(int i = 0; i < 5; i++)
+        if(getppid() == ppid)
+            pid = fork();
 
     if(pid == 0){
         int count = 0;
         while(1){
             printf("Child   -- %d -- %d ---- count= %d\n",getpid(),getppid(),count); 
-            sleep(1);
+            sleep(3);
             count++;
         }
-        printf("CHILD SIGINT   -- %d -- %d\n",getpid(),getppid()); 
     }
     else if(pid > 0){
         if(getppid() == ppid){           
