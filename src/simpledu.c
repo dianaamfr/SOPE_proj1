@@ -367,10 +367,6 @@ int main(int argc, char* argv[], char* envp[]){
       exit(ERRORARGS);
    }
 
-   /*if (flags.d < 0) {
-      exit(ERRORARGS);
-   }*/
-
    printFlags(&flags,"RUNNING");
 
    //check if the path exists
@@ -391,7 +387,6 @@ int main(int argc, char* argv[], char* envp[]){
          return ERRORARGS;
       }
    }
-   
 
    //if the user asks for the size of a directory
    if (S_ISDIR(stat_buf.st_mode)) {
@@ -412,7 +407,7 @@ int main(int argc, char* argv[], char* envp[]){
       if ((dirp = opendir(flags.path)) == NULL) 
          fprintf(stderr, "Could not open directory %s\n", flags.path);
 
-      //while there are still contents inside the current directory
+      //search for subdirectories in current directory
       while ((direntp = readdir(dirp)) != NULL) {
 
          char *pathname; //para guardar o path de cada ficheiro ou subdiretório
@@ -424,7 +419,7 @@ int main(int argc, char* argv[], char* envp[]){
             exit(1);
          }
       
-         //guarda o path do ficheiro ou subdiretorio
+         //guarda o path do subdiretorio
          sprintf(pathname, "%s/%s", flags.path, direntp->d_name);
 
          if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
@@ -440,15 +435,50 @@ int main(int argc, char* argv[], char* envp[]){
             }
          }
       
-         /*TODO if is dir do the fork() and execute itself -> o prof sugeriu percorrer o conteudo do diretorio, encontrar os subdiretorios todos, fazer o fork para todos
-          e depois voltar a percorrer o diretorio mas desta vez à procura de ficheiros regulares (se não me engano)*/
+          if (S_ISDIR(stat_buf.st_mode)){
+            //fork, exec and stuff;  Needs to get the size of the subdirectory from its child process and sum the size to the total size
+          }
 
+         free(pathname);
+      }
+
+      //get back to the beginning of the directory
+      rewinddir(direntp);
+
+      //search for regular files and symbolic links in current directory
+      while ((direntp = readdir(dirp)) != NULL) {
+         char *pathname; //para guardar o path de cada ficheiro ou subdiretório
+
+         pathname = malloc(strlen(flags.path) + 1 + strlen(direntp->d_name) + 1);
+
+         if (pathname == NULL) {
+            fprintf(stderr, "Memory Allocation error\n");
+            exit(1);
+         }
+      
+         //guarda o path do ficheiro
+         sprintf(pathname, "%s/%s", flags.path, direntp->d_name);
+
+         if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
+            if (lstat(pathname, &stat_buf)){ 
+               fprintf(stderr, "Stat error in %s\n", pathname);
+               return 1;
+            }
+         }
+         else{
+            if (stat(pathname, &stat_buf)){ 
+               fprintf(stderr, "Stat error in %s\n", pathname);
+               return 1;
+            }
+         }
+      
          if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
             totalSize += dirFileSize(&flags,&stat_buf,pathname);
          } 
 
-         free(pathname);
+         free(pathname);  
       }
+
       closedir(dirp);
 
       //for -B size with size > 1 we do the calculation as in -B 1 and compute totalSize in the end by dividing the total by the size specified
