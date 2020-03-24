@@ -443,7 +443,7 @@ int main(int argc, char* argv[], char* envp[]){
       }
 
       //get back to the beginning of the directory
-      rewinddir(direntp);
+      rewinddir(dirp);
 
       //search for regular files and symbolic links in current directory
       while ((direntp = readdir(dirp)) != NULL) {

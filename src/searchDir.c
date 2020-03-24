@@ -12,10 +12,28 @@
 int main(int argc, char* argv[], char* envp[]){
 
    flagMask flags; //the flags will be received via pipe
-   DIR *dirp; //the directory descriptor can also be passed in the file descriptor
+   DIR *dirp; 
    struct dirent *direntp;
    struct stat stat_buf;
    long totalSize = 0, tempSize = 0;
+
+   if(argc < 2){//for now it expects to receive only the path in its arguments
+      printf("Usage: %s [path] \n",argv[0]);
+      exit(ERRORARGS);
+   }
+
+   if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
+      if (lstat(flags.path, &stat_buf)){ 
+         fprintf(stderr, "Stat error in %s\n", argv[1]);
+         return ERRORARGS;
+      }
+   }
+   else{ //use stat to follow symbolic links - dereference the link
+      if (stat(flags.path, &stat_buf)){ 
+         fprintf(stderr, "Stat error in %s\n", argv[1]);
+         return ERRORARGS;
+      }
+   }
 
    //sum the size of the current directory according to active options
    if (flags.b){
@@ -30,7 +48,7 @@ int main(int argc, char* argv[], char* envp[]){
    totalSize += tempSize;
 
    //try to open the directory
-   if ((dirp = opendir(flags.path)) == NULL) 
+   if ((dirp = opendir(argv[1])) == NULL) 
       fprintf(stderr, "Could not open directory %s\n", flags.path);
 
    //search for subdirectories in current directory
