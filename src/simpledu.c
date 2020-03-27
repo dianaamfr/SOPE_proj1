@@ -443,7 +443,7 @@ int main(int argc, char* argv[], char* envp[]){
             int fd1[2], fd2[2];
             pid_t pid; 
 
-            if (pipe(fd1)<0 || pipe(fd2)<0){
+            if (pipe(fd1) < 0 || pipe(fd2) < 0){
                fprintf(stderr,"%s\n","Pipe error!\n");
                exit(1); 
             }
@@ -454,14 +454,13 @@ int main(int argc, char* argv[], char* envp[]){
             }
                
             if(pid > 0){ //PARENT
-               close(fd1[READ]);
-               close(fd2[WRITE]);
+               close(fd1[READ]); // vai escrever as flags logo não lê
+               close(fd2[WRITE]); // lê a informação dos ficheiros do filho por isso não escreve 
 
                write(fd1[WRITE],&flags,sizeof(flagMask));
-               close(fd1[WRITE]);
+               close(fd1[WRITE]); 
 
-               read(fd2[READ],&subDir,sizeof(subDirInfo));
-
+               read(fd2[READ],&subDir,sizeof(subDirInfo)); // lê a informação dos ficheiros do subdiretorio e o seu tamanho total
                close(fd2[READ]);
 
                if(flags.a){
@@ -473,23 +472,21 @@ int main(int argc, char* argv[], char* envp[]){
                else
                   printf("%-8ld  %-10s\n",subDir.fileSizes[0],subDir.fileNames[0]);
 
-
                totalSize += subDir.size;
             }
 
             else{ //CHILD
-               close(fd1[WRITE]);
-               close(fd2[READ]);
+               close(fd1[WRITE]); //vai ler as flags logo não escreve
+               close(fd2[READ]); //escreve informação sobre os seus ficheiros logo não lê
 
-               dup2(fd1[READ],STDIN_FILENO);
-               dup2(fd2[WRITE],STDOUT_FILENO);
+               dup2(fd1[READ],STDIN_FILENO); //lê do pipe em vez de ler do STDIN
+               dup2(fd2[WRITE],STDOUT_FILENO); //escreve no pipe em vez de na STDOUT
 
                //vamos ter que ter o path completo -> solução temporaria
                execl("searchDir", "searchDir", pathname, NULL);
                fprintf(stderr,"Exec error in %s!\n",pathname);
                exit(1);
-            }
-            
+            } 
          }
 
          free(pathname);

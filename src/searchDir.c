@@ -111,7 +111,7 @@ int main(int argc, char* argv[], char* envp[]){
       exit(ERROR);
    }
 
-   if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){
+   if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){ // lê do pipe as flags
       fprintf(stderr, "Flags test: %d %d %d %d!\n", flags.b, flags.B, flags.a, flags.l);
       exit(ERROR);
    }
@@ -211,8 +211,7 @@ int main(int argc, char* argv[], char* envp[]){
                }
             }
             else
-               printf("%-8ld  %-10s\n",subDir.fileSizes[0],subDir.fileNames[0]);
-
+               printf("%-8ld  %-10s\n",subDir.fileSizes[0],subDir.fileNames[0]); 
 
             dirInfo.size += subDir.size;
          }

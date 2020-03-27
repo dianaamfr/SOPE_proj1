@@ -36,7 +36,7 @@ typedef struct flagMask{
  * 
 */
 typedef struct subDirInfo{
-  long int size;                      /*< size of the subdirectory*/
-  char fileNames[MAX_NUM_FILES][MAXLINE];                  /*< The name of each file of the subdirectory */
-  long int fileSizes[MAX_NUM_FILES];               /*< The size of each file of the subdirectory */
+  long int size;                            /*< size of the subdirectory*/
+  char fileNames[MAX_NUM_FILES][MAXLINE];   /*< The name of each file of the subdirectory */
+  long int fileSizes[MAX_NUM_FILES];        /*< The size of each file of the subdirectory */
 } subDirInfo;
