@@ -349,9 +349,11 @@ long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname){
    }
 
    //print all regular files if --all (-a) is active
-   if(flags->a) printf("%-8ld  %-10s\n", size, pathname);
+   if(flags->a) 
+      printf("%-8ld  %-10s\n", size, pathname);
    //for -B option we want to show one size on screen but pass another to the total size calculation
-   if(flags->B) size = sizeBTemp;
+   if(flags->B) 
+      size = sizeBTemp;
 
    return size;
 }
@@ -363,8 +365,7 @@ int main(int argc, char* argv[], char* envp[]){
    struct dirent *direntp;
    struct stat stat_buf;
    long totalSize = 0, tempSize = 0;
-   subDirInfo subDir;
-   subDir.size = 0;
+   long int subDirSize;
 
    if(checkArgs(argc,argv,&flags) != OK){
       printf("Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
@@ -429,13 +430,13 @@ int main(int argc, char* argv[], char* envp[]){
          if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
             if (lstat(pathname, &stat_buf)){ 
                fprintf(stderr, "Stat error in %s\n", pathname);
-               return 1;
+               exit(ERROR);
             }
          }
          else{
             if (stat(pathname, &stat_buf)){ 
                fprintf(stderr, "Stat error in %s\n", pathname);
-               return 1;
+               exit(ERROR);
             }
          }
       
@@ -445,12 +446,12 @@ int main(int argc, char* argv[], char* envp[]){
 
             if (pipe(fd1) < 0 || pipe(fd2) < 0){
                fprintf(stderr,"%s\n","Pipe error!\n");
-               exit(1); 
+               exit(ERROR); 
             }
 
             if ((pid = fork()) < 0){
                fprintf(stderr,"%s\n","Fork error!\n");
-               exit(1); 
+               exit(ERROR); 
             }
                
             if(pid > 0){ //PARENT
@@ -460,19 +461,10 @@ int main(int argc, char* argv[], char* envp[]){
                write(fd1[WRITE],&flags,sizeof(flagMask));
                close(fd1[WRITE]); 
 
-               read(fd2[READ],&subDir,sizeof(subDirInfo)); // lê a informação dos ficheiros do subdiretorio e o seu tamanho total
+               read(fd2[READ],&subDirSize,sizeof(long int)); // lê a informação dos ficheiros do subdiretorio e o seu tamanho total
                close(fd2[READ]);
 
-               if(flags.a){
-                  for(int i = 0; i < MAX_NUM_FILES; i++){
-                     if(strcmp(subDir.fileNames[i],"\0") == 0) break;
-                     else printf("%-8ld  %-10s\n",subDir.fileSizes[i],subDir.fileNames[i]);
-                  }
-               }
-               else
-                  printf("%-8ld  %-10s\n",subDir.fileSizes[0],subDir.fileNames[0]);
-
-               totalSize += subDir.size;
+               totalSize += subDirSize;
             }
 
             else{ //CHILD
@@ -480,12 +472,15 @@ int main(int argc, char* argv[], char* envp[]){
                close(fd2[READ]); //escreve informação sobre os seus ficheiros logo não lê
 
                dup2(fd1[READ],STDIN_FILENO); //lê do pipe em vez de ler do STDIN
+
+               int saved_stdout = dup(STDOUT_FILENO);
                dup2(fd2[WRITE],STDOUT_FILENO); //escreve no pipe em vez de na STDOUT
 
-               //vamos ter que ter o path completo -> solução temporaria
-               execl("searchDir", "searchDir", pathname, NULL);
-               fprintf(stderr,"Exec error in %s!\n",pathname);
-               exit(1);
+               char stdout_str [10] = ""; 
+               sprintf(stdout_str , "%d", saved_stdout);
+               execl("searchDir", "searchDir", pathname, stdout_str, NULL);
+               fprintf(stderr,"Exec error in %s\n",pathname);
+               exit(ERROR);
             } 
          }
 

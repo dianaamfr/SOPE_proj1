@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include "searchDir.h"
 
-long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, subDirInfo * dirInfo, int pos){
+long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, int stdout_fd){
    
    long int sizeBTemp = 0, size = 0;
 
@@ -68,12 +68,12 @@ long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, su
    }
 
    //print all regular files if --all (-a) is active
-   if(flags->a){
-      strcpy(dirInfo->fileNames[pos], pathname);
-      dirInfo->fileSizes[pos] = size;
-   }
+   if(flags->a)
+      dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
+   
    //for -B option we want to show one size on screen but pass another to the total size calculation
-   if(flags->B) size = sizeBTemp;
+   if(flags->B) 
+      size = sizeBTemp;
 
    return size;
 }
@@ -102,11 +102,10 @@ int main(int argc, char* argv[], char* envp[]){
    struct dirent *direntp;
    struct stat stat_buf;
    long int tempSize = 0; 
-   subDirInfo dirInfo, subDir;
-   dirInfo.size = 0;
-   unsigned int pos = 0;
+   long int totalSize = 0, subDirSize;
+   int stdout_fd;
 
-   if(argc < 2){//for now it expects to receive only the path in its arguments
+   if(argc < 3){//for now it expects to receive only the path in its arguments
       printf("Usage: %s [path] \n",argv[0]);
       exit(ERROR);
    }
@@ -115,6 +114,8 @@ int main(int argc, char* argv[], char* envp[]){
       fprintf(stderr, "Flags test: %d %d %d %d!\n", flags.b, flags.B, flags.a, flags.l);
       exit(ERROR);
    }
+
+   stdout_fd = atoi(argv[2]);
 
    //check if the path exists
    if(validatePath(argv[1]) != OK){
@@ -145,7 +146,7 @@ int main(int argc, char* argv[], char* envp[]){
    else{// du without options - default
       tempSize = (int)ceil(stat_buf.st_blksize*ceil((double)stat_buf.st_size/stat_buf.st_blksize)/1024);
    }
-   dirInfo.size += tempSize;
+   totalSize += tempSize;
 
    //try to open the directory
    if ((dirp = opendir(argv[1])) == NULL) 
@@ -169,13 +170,13 @@ int main(int argc, char* argv[], char* envp[]){
       if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
          if (lstat(pathname, &stat_buf)){ 
             fprintf(stderr, "Stat error in %s\n", pathname);
-            return 1;
+            exit(ERROR);
          }
       }
       else{
          if (stat(pathname, &stat_buf)){ 
             fprintf(stderr, "Stat error in %s\n", pathname);
-            return 1;
+            exit(ERROR);
          }
       }
    
@@ -183,14 +184,14 @@ int main(int argc, char* argv[], char* envp[]){
          int fd1[2], fd2[2];
          pid_t pid; 
 
-         if (pipe(fd1)<0 || pipe(fd2)<0){
+         if (pipe(fd1) < 0 || pipe(fd2) < 0){
             fprintf(stderr,"%s\n","Pipe error!\n");
-            exit(1); 
+            exit(ERROR); 
          }
 
          if ((pid = fork()) < 0){
             fprintf(stderr,"%s\n","Fork error!\n");
-            exit(1); 
+            exit(ERROR); 
          }
             
          if(pid > 0){ //PARENT
@@ -200,20 +201,10 @@ int main(int argc, char* argv[], char* envp[]){
             write(fd1[WRITE],&flags,sizeof(flagMask));
             close(fd1[WRITE]);
 
-            read(fd2[READ],&subDir,sizeof(subDirInfo));
-
+            read(fd2[READ],&subDirSize,sizeof(long int));
             close(fd2[READ]);
 
-            if(flags.a){
-               for(int i = 0; i < MAX_NUM_FILES; i++){
-                  if(strcmp(subDir.fileNames[i],"\0") == 0) break;
-                  else printf("%-8ld  %-10s\n",subDir.fileSizes[i],subDir.fileNames[i]);
-               }
-            }
-            else
-               printf("%-8ld  %-10s\n",subDir.fileSizes[0],subDir.fileNames[0]); 
-
-            dirInfo.size += subDir.size;
+            totalSize += subDirSize;
          }
 
          else{ //CHILD
@@ -221,12 +212,12 @@ int main(int argc, char* argv[], char* envp[]){
             close(fd2[READ]);
 
             dup2(fd1[READ],STDIN_FILENO);
+
             dup2(fd2[WRITE],STDOUT_FILENO);
 
-            //vamos ter que ter o path completo -> solução temporaria
-            execl("searchDir", "searchDir", pathname, NULL);
+            execl("searchDir", "searchDir", pathname, argv[2], NULL);
             fprintf(stderr,"Exec error in %s!\n",pathname);
-            exit(1);
+            exit(ERROR);
          }   
       }
 
@@ -264,10 +255,7 @@ int main(int argc, char* argv[], char* envp[]){
       }
    
       if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
-         dirInfo.size += dirFileSize(&flags,&stat_buf,pathname,&dirInfo,pos);
-
-         if(flags.a)
-            pos++;
+         totalSize += dirFileSize(&flags,&stat_buf,pathname,stdout_fd);
       } 
 
       free(pathname);  
@@ -275,15 +263,13 @@ int main(int argc, char* argv[], char* envp[]){
 
    closedir(dirp);
 
+   write(STDOUT_FILENO,&totalSize,sizeof(long int));
+
    //print the size of the directory or regular file
-   strcpy(dirInfo.fileNames[pos], argv[1]);
    //for -B size with size > 1 we do the calculation as in -B 1 and compute dirInfo.size in the end by dividing the total by the size specified
    if(flags.B)
-       dirInfo.fileSizes[pos] = ceil((double)dirInfo.size / flags.size);
-   else 
-      dirInfo.fileSizes[pos] = dirInfo.size;
+      totalSize = ceil((double)totalSize / flags.size);
+   dprintf(stdout_fd,"%-8ld  %-10s\n", totalSize, argv[1]);
 
-   write(STDOUT_FILENO,&dirInfo,sizeof(subDirInfo));
-
-   exit(0);
+   exit(OK);
 }

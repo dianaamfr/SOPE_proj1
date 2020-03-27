@@ -7,11 +7,10 @@
  * @param flags flagMask with active flags
  * @param stat_buf with info about block size and file size in bytes
  * @param pathname the name of the path of the file
- * @param dirInfo the struct where the information about the size of the files should be added (if -a is active)
- * @param pos the index where the new line with info about a file should be added in dirInfo lines array
+ * @param stdout_fd the file descriptor to use when writing to the console
  * @return the size occupied by the file
 */
-long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, subDirInfo * dirInfo, int pos);
+long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, int stdout_fd);
 
 /**
  * @brief Main function to search in a directory
