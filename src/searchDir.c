@@ -102,7 +102,7 @@ int main(int argc, char* argv[], char* envp[]){
    struct dirent *direntp;
    struct stat stat_buf;
    long int tempSize = 0; 
-   subDirInfo dirInfo;
+   subDirInfo dirInfo, subDir;
    dirInfo.size = 0;
    unsigned int pos = 0;
 
@@ -179,9 +179,57 @@ int main(int argc, char* argv[], char* envp[]){
          }
       }
    
-         if (S_ISDIR(stat_buf.st_mode)){
-            
+      if (S_ISDIR(stat_buf.st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
+         int fd1[2], fd2[2];
+         pid_t pid; 
+
+         if (pipe(fd1)<0 || pipe(fd2)<0){
+            fprintf(stderr,"%s\n","Pipe error!\n");
+            exit(1); 
          }
+
+         if ((pid = fork()) < 0){
+            fprintf(stderr,"%s\n","Fork error!\n");
+            exit(1); 
+         }
+            
+         if(pid > 0){ //PARENT
+            close(fd1[READ]);
+            close(fd2[WRITE]);
+
+            write(fd1[WRITE],&flags,sizeof(flagMask));
+            close(fd1[WRITE]);
+
+            read(fd2[READ],&subDir,sizeof(subDirInfo));
+
+            close(fd2[READ]);
+
+            if(flags.a){
+               for(int i = 0; i < MAX_NUM_FILES; i++){
+                  if(strcmp(subDir.fileNames[i],"\0") == 0) break;
+                  else printf("%-8ld  %-10s\n",subDir.fileSizes[i],subDir.fileNames[i]);
+               }
+            }
+            else
+               printf("%-8ld  %-10s\n",subDir.fileSizes[0],subDir.fileNames[0]);
+
+
+            dirInfo.size += subDir.size;
+         }
+
+         else{ //CHILD
+            close(fd1[WRITE]);
+            close(fd2[READ]);
+
+            dup2(fd1[READ],STDIN_FILENO);
+            dup2(fd2[WRITE],STDOUT_FILENO);
+
+            //vamos ter que ter o path completo -> solução temporaria
+            execl("searchDir", "searchDir", pathname, NULL);
+            fprintf(stderr,"Exec error in %s!\n",pathname);
+            exit(1);
+         }   
+      }
 
       free(pathname);
    }
@@ -218,7 +266,9 @@ int main(int argc, char* argv[], char* envp[]){
    
       if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
          dirInfo.size += dirFileSize(&flags,&stat_buf,pathname,&dirInfo,pos);
-         pos++;
+
+         if(flags.a)
+            pos++;
       } 
 
       free(pathname);  
@@ -226,14 +276,13 @@ int main(int argc, char* argv[], char* envp[]){
 
    closedir(dirp);
 
-   //for -B size with size > 1 we do the calculation as in -B 1 and compute dirInfo.size in the end by dividing the total by the size specified
-   if(flags.B){
-      dirInfo.size  = ceil((double)dirInfo.size / flags.size);
-   }
-
    //print the size of the directory or regular file
    strcpy(dirInfo.fileNames[pos], argv[1]);
-   dirInfo.fileSizes[pos] = dirInfo.size;
+   //for -B size with size > 1 we do the calculation as in -B 1 and compute dirInfo.size in the end by dividing the total by the size specified
+   if(flags.B)
+       dirInfo.fileSizes[pos] = ceil((double)dirInfo.size / flags.size);
+   else 
+      dirInfo.fileSizes[pos] = dirInfo.size;
 
    write(STDOUT_FILENO,&dirInfo,sizeof(subDirInfo));
 

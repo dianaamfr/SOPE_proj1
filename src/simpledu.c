@@ -470,6 +470,9 @@ int main(int argc, char* argv[], char* envp[]){
                      else printf("%-8ld  %-10s\n",subDir.fileSizes[i],subDir.fileNames[i]);
                   }
                }
+               else
+                  printf("%-8ld  %-10s\n",subDir.fileSizes[0],subDir.fileNames[0]);
+
 
                totalSize += subDir.size;
             }
@@ -487,7 +490,7 @@ int main(int argc, char* argv[], char* envp[]){
                exit(1);
             }
             
-          }
+         }
 
          free(pathname);
       }
