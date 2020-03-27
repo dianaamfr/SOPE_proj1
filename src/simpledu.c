@@ -8,6 +8,8 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <ctype.h>
+#include <unistd.h> 
+#include <sys/wait.h>
 
 long int checkBsize(char *optarg) {
 
@@ -361,6 +363,8 @@ int main(int argc, char* argv[], char* envp[]){
    struct dirent *direntp;
    struct stat stat_buf;
    long totalSize = 0, tempSize = 0;
+   subDirInfo subDir;
+   subDir.size = 0;
 
    if(checkArgs(argc,argv,&flags) != OK){
       printf("Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
@@ -435,8 +439,54 @@ int main(int argc, char* argv[], char* envp[]){
             }
          }
       
-          if (S_ISDIR(stat_buf.st_mode)){
-            //fork, exec and stuff;  Needs to get the size of the subdirectory from its child process and sum the size to the total size
+         if (S_ISDIR(stat_buf.st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
+            int fd1[2], fd2[2];
+            pid_t pid; 
+
+            if (pipe(fd1)<0 || pipe(fd2)<0){
+               fprintf(stderr,"%s\n","Pipe error!\n");
+               exit(1); 
+            }
+
+            if ((pid = fork()) < 0){
+               fprintf(stderr,"%s\n","Fork error!\n");
+               exit(1); 
+            }
+               
+            if(pid > 0){ //PARENT
+               close(fd1[READ]);
+               close(fd2[WRITE]);
+
+               write(fd1[WRITE],&flags,sizeof(flagMask));
+               close(fd1[WRITE]);
+
+               read(fd2[READ],&subDir,sizeof(subDirInfo));
+
+               close(fd2[READ]);
+
+               if(flags.a){
+                  for(int i = 0; i < MAX_NUM_FILES; i++){
+                     if(strcmp(subDir.fileNames[i],"\0") == 0) break;
+                     else printf("%-8ld  %-10s\n",subDir.fileSizes[i],subDir.fileNames[i]);
+                  }
+               }
+
+               totalSize += subDir.size;
+            }
+
+            else{ //CHILD
+               close(fd1[WRITE]);
+               close(fd2[READ]);
+
+               dup2(fd1[READ],STDIN_FILENO);
+               dup2(fd2[WRITE],STDOUT_FILENO);
+
+               //vamos ter que ter o path completo -> solução temporaria
+               execl("searchDir", "searchDir", pathname, NULL);
+               fprintf(stderr,"Exec error in %s!\n",pathname);
+               exit(1);
+            }
+            
           }
 
          free(pathname);

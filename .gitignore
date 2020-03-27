@@ -1,3 +1,5 @@
 src/simpledu
 src/*.o
 src/*.out
+
+.vscode/
