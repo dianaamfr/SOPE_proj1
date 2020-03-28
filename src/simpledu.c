@@ -11,6 +11,8 @@
 #include <ctype.h>
 #include <unistd.h> 
 #include <sys/wait.h>
+#include <errno.h>
+#include <signal.h>
 
 long int checkBsize(char *optarg) {
 
@@ -254,14 +256,37 @@ int main(int argc, char* argv[], char* envp[]){
    struct stat stat_buf;
    long totalSize = 0, tempSize = 0;
    long int subDirSize;
+   int oldStdout;
+   char oldStdoutStr[10] = "";
+   bool isSubDir = false;
 
    if(checkArgs(argc,argv,&flags) != OK){
-      printf("Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
-      exit(ERRORARGS);
+      //se não foram passadas flags então verifica se existem 3 argumentos
+      if(argc < 3){
+         printf("Usage: %s [path] \n",argv[0]);
+         exit(ERRORARGS);
+      }
+      else{
+         // se existem 3 argumentos tenta ler do pipe
+         // > se não conseguir então não existe pipe para ler e portanto as flags são inválidas
+         // > se conseguir então estamos perante um subdiretório
+         if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){ 
+            fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
+            exit(ERRORARGS);
+         }
+
+         isSubDir = true;
+
+         //se for um subdiretorio é necessário utilizar o descritor do stdout passado nos argumentos
+         oldStdout = atoi(argv[2]);
+         // Converter o descritor antigo do STDOUT em string para passar como parâmetro no exec
+         sprintf(oldStdoutStr , "%d", oldStdout); 
+      }
    }
 
-   printFlags(&flags,"RUNNING");
-
+   else
+      printFlags(&flags,"RUNNING");
+   
    //check if the path exists
    if(validatePath(flags.path) != OK){
       fprintf(stderr, "Invalid path error in %s\n", flags.path);
@@ -336,7 +361,7 @@ int main(int argc, char* argv[], char* envp[]){
 
             //cria os pipes 
             if (pipe(fd1) < 0 || pipe(fd2) < 0){
-               fprintf(stderr,"%s\n","Pipe error!\n");
+               fprintf(stderr,"Pipe error: %d!\n",errno);
                exit(ERROR); 
             }
 
@@ -358,6 +383,9 @@ int main(int argc, char* argv[], char* envp[]){
 
                // acrecenta-se ao tamanho total do diretorio atual o tamanho do seu subdiretorio
                totalSize += subDirSize;
+
+               wait(NULL);
+               if(!isSubDir) kill(0,SIGKILL);
             }
 
             else{ //CHILD
@@ -366,13 +394,12 @@ int main(int argc, char* argv[], char* envp[]){
 
                dup2(fd1[READ],STDIN_FILENO); // Quando o filho ler (read) do STDIN vai na verdade ler do Pipe 1 (onde tem as flags)
 
-               int oldStdout = dup(STDOUT_FILENO); // Guardar o descritor antigo do STDOUT
+               if(!isSubDir) 
+                  oldStdout = dup(STDOUT_FILENO); // Guardar o descritor antigo do STDOUT
+
                dup2(fd2[WRITE],STDOUT_FILENO); // Quando o filho escrever (write) no STDOUT vai na verdade escrever no Pipe 2
 
-               char oldStdoutStr [10] = ""; 
-               sprintf(oldStdoutStr , "%d", oldStdout); // Converter o descritor antigo do STDOUT em string para passar como parâmetro no exec
-
-               execl("searchDir", "searchDir", pathname, oldStdoutStr, NULL);
+               execl("simpledu", "simpledu", pathname, oldStdoutStr, NULL);
                fprintf(stderr,"Exec error in %s\n",pathname);
                exit(ERROR);
             } 
@@ -421,9 +448,21 @@ int main(int argc, char* argv[], char* envp[]){
 
       closedir(dirp);
 
-      //for -B size with size > 1 we do the calculation as in -B 1 and compute totalSize in the end by dividing the total by the size specified
-      if(flags.B){
-         totalSize  = ceil((double)totalSize / flags.size);
+      if(isSubDir){
+         write(STDOUT_FILENO,&totalSize,sizeof(long int));
+         //print the size of the directory or regular file
+         //for -B size with size > 1 we do the calculation as in -B 1 and compute dirInfo.size in the end by dividing the total by the size specified
+         if(flags.B)
+            totalSize = ceil((double)totalSize / flags.size);
+         dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, argv[1]);
+      }
+      else{
+         //for -B size with size > 1 we do the calculation as in -B 1 and compute totalSize in the end by dividing the total by the size specified
+         if(flags.B)
+            totalSize  = ceil((double)totalSize / flags.size);
+
+         //print the size of the directory or regular file
+         printf("%-8ld  %-10s\n", totalSize, flags.path);
       }
    }
 
@@ -434,9 +473,6 @@ int main(int argc, char* argv[], char* envp[]){
    else if (S_ISLNK(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
       totalSize = symbolicLinkSize(&flags,&stat_buf);
    }
-
-   //print the size of the directory or regular file
-   printf("%-8ld  %-10s\n", totalSize, flags.path);
 
    exit(OK);
 }
