@@ -261,37 +261,44 @@ int main(int argc, char* argv[], char* envp[]){
    bool isSubDir = false;
 
    if(checkArgs(argc,argv,&flags) != OK){
-      //se não foram passadas flags então verifica se existem 3 argumentos
-      if(argc < 3){
-         printf("Usage: %s [path] \n",argv[0]);
+      fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
+      exit(ERRORARGS);
+   }
+   
+   //se o path não for válido então devemos verificar se estamos a processar um subdiretorio
+   if(validatePath(flags.path) != OK){
+      if(argc != 2){
+         fprintf(stderr, "Invalid path error in %s\n", flags.path);
          exit(ERRORARGS);
       }
-      else{
-         // se existem 3 argumentos tenta ler do pipe
-         // > se não conseguir então não existe pipe para ler e portanto as flags são inválidas
-         // > se conseguir então estamos perante um subdiretório
-         if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){ 
-            fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
+
+      //se estivermos a processar um subdiretorio então o argv[1] é um descritor
+      for(int i = 0; i < strlen(argv[1]); i++){
+         if(isdigit(argv[1][i]) == 0){
+            fprintf(stderr, "Invalid path error in %s\n", flags.path);
             exit(ERRORARGS);
          }
-
-         isSubDir = true;
-
-         //se for um subdiretorio é necessário utilizar o descritor do stdout passado nos argumentos
-         oldStdout = atoi(argv[2]);
-         // Converter o descritor antigo do STDOUT em string para passar como parâmetro no exec
-         sprintf(oldStdoutStr , "%d", oldStdout); 
       }
-   }
 
-   else
-      printFlags(&flags,"RUNNING");
-   
-   //check if the path exists
-   if(validatePath(flags.path) != OK){
-      fprintf(stderr, "Invalid path error in %s\n", flags.path);
-      exit(ERRORARGS);
+      //problema a resolver com sinais ? Se o nome do path dado inicialmente for um numero temos aqui um problema
+      if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){ 
+         fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
+         exit(ERRORARGS);
+      }
+
+      isSubDir = true;
+
+      //se for um subdiretorio é necessário utilizar o descritor do stdout passado nos argumentos
+      oldStdout = atoi(argv[1]);
+      // Converter o descritor antigo do STDOUT em string para passar como parâmetro no exec
+      sprintf(oldStdoutStr , "%d", oldStdout); 
    } 
+
+   else{
+      oldStdout = dup(STDOUT_FILENO);
+      sprintf(oldStdoutStr , "%d", oldStdout);
+      printFlags(&flags,"Running"); 
+   }
 
    if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
       if (lstat(flags.path, &stat_buf)){ 
@@ -375,17 +382,22 @@ int main(int argc, char* argv[], char* envp[]){
                close(fd1[READ]); // Pipe 1 (pai -> filho) o processo pai vai escrever as flags no Pipe 1 (logo não lê do Pipe 1)
                close(fd2[WRITE]); // Pipe 2 (filho -> pai) o pai lê o tamanho ocupado pelo filho (subdiretorio) e por isso não escreve no Pipe 2
 
+               char tempPath[MAX_PATH];
+               strcpy(tempPath,flags.path);
+               memset(flags.path,'\0',MAX_PATH);
+               strcpy(flags.path, pathname);
+
                write(fd1[WRITE],&flags,sizeof(flagMask)); // Pipe 1 (pai -> filho) o processo pai escreve as flags no Pipe 1
                close(fd1[WRITE]);
+
+               memset(flags.path,'\0',MAX_PATH);
+               strcpy(flags.path,tempPath);
 
                read(fd2[READ],&subDirSize,sizeof(long int)); // Pipe 2 (filho -> pai) o pai lê o tamanho ocupado pelo filho (subdiretorio)
                close(fd2[READ]);
 
                // acrecenta-se ao tamanho total do diretorio atual o tamanho do seu subdiretorio
                totalSize += subDirSize;
-
-               wait(NULL);
-               if(!isSubDir) kill(0,SIGKILL);
             }
 
             else{ //CHILD
@@ -394,12 +406,9 @@ int main(int argc, char* argv[], char* envp[]){
 
                dup2(fd1[READ],STDIN_FILENO); // Quando o filho ler (read) do STDIN vai na verdade ler do Pipe 1 (onde tem as flags)
 
-               if(!isSubDir) 
-                  oldStdout = dup(STDOUT_FILENO); // Guardar o descritor antigo do STDOUT
-
                dup2(fd2[WRITE],STDOUT_FILENO); // Quando o filho escrever (write) no STDOUT vai na verdade escrever no Pipe 2
 
-               execl("simpledu", "simpledu", pathname, oldStdoutStr, NULL);
+               execl("simpledu", "simpledu", oldStdoutStr, NULL);
                fprintf(stderr,"Exec error in %s\n",pathname);
                exit(ERROR);
             } 
@@ -440,7 +449,7 @@ int main(int argc, char* argv[], char* envp[]){
          }
       
          if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
-            totalSize += dirFileSize(&flags,&stat_buf,pathname,STDOUT_FILENO);
+            totalSize += dirFileSize(&flags,&stat_buf,pathname,oldStdout);
          } 
 
          free(pathname);  
@@ -450,19 +459,6 @@ int main(int argc, char* argv[], char* envp[]){
 
       if(isSubDir){
          write(STDOUT_FILENO,&totalSize,sizeof(long int));
-         //print the size of the directory or regular file
-         //for -B size with size > 1 we do the calculation as in -B 1 and compute dirInfo.size in the end by dividing the total by the size specified
-         if(flags.B)
-            totalSize = ceil((double)totalSize / flags.size);
-         dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, argv[1]);
-      }
-      else{
-         //for -B size with size > 1 we do the calculation as in -B 1 and compute totalSize in the end by dividing the total by the size specified
-         if(flags.B)
-            totalSize  = ceil((double)totalSize / flags.size);
-
-         //print the size of the directory or regular file
-         printf("%-8ld  %-10s\n", totalSize, flags.path);
       }
    }
 
@@ -474,6 +470,12 @@ int main(int argc, char* argv[], char* envp[]){
       totalSize = symbolicLinkSize(&flags,&stat_buf);
    }
 
+   //print the size of the directory or regular file
+   //for -B size with size > 1 we do the calculation as in -B 1 and compute dirInfo.size in the end by dividing the total by the size specified
+   if(flags.B)
+      totalSize = ceil((double)totalSize / flags.size);
+   
+   dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, flags.path);
+
    exit(OK);
 }
-
