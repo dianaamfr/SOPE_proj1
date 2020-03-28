@@ -1,3 +1,6 @@
+#ifndef TYPES_H
+#define TYPES_H
+
 #define OK 0
 #define ERROR 1
 #define ERRORARGS 1
@@ -29,3 +32,5 @@ typedef struct flagMask{
   int  N;                                   /*< N                   -> only if it is N or fewer levels below the command line argument; */
   char path[MAX_PATH];                      /*< pathname */
 } flagMask;
+
+#endif

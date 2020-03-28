@@ -1,9 +1,10 @@
+#include "simpledu.h"
+#include "aux.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <getopt.h> 
-#include "simpledu.h"
 #include <math.h>
 #include <dirent.h>
 #include <sys/types.h>
@@ -49,52 +50,6 @@ long int checkBsize(char *optarg) {
    else return ERROR_BSIZE;
 
    return OK;
-}
-
-int validatePath(char * path){
-
-   struct stat stat_buf;
-
-   //if empty path consider the current directory
-   if(strcmp(path, "") == OK){
-      memset(path,0,MAX_PATH);
-      strcpy(path, ".");
-      return OK;
-   }
-
-   if(lstat(path, &stat_buf) == OK) 
-      return OK;
-   
-   return ERRORARGS;
-}
-
-void printFlags(flagMask * flags, char * description){
-   printf("###########################\n");
-
-   printf("%s...\n",description);
-
-   printf("a: %d\n", flags->a);
-
-   printf("b: %d\n", flags->b);
-
-   printf("B: %d\n", flags->B);
-
-   printf("l: %d\n", flags->l);
-
-   printf("L: %d\n", flags->L);
-
-   printf("S: %d\n", flags->S);
-
-   printf("max-depth: %d", flags->d);
-   if(flags->d)
-      printf(" value=%d", flags->N);
-   printf("\n");
-
-   printf("size: %ld\n",flags->size);
-
-   printf("path: %s\n", flags->path);
-
-   printf("###########################\n");
 }
 
 int checkArgs(int argc, char* argv[], flagMask *flags){
@@ -291,73 +246,6 @@ long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf){
    return totalSize;
 }
 
-long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname){
-   
-   long int sizeBTemp = 0, size = 0;
-
-   if (S_ISREG(stat_buf->st_mode)){//if it is a regular file
-      //calculate the space in disk of the regular file according to the active options
-      // -b || -B 1 -b || -b -B 1  => -b
-      if (flags->b && !flags->B){
-         size = stat_buf->st_size;
-      }
-      else if(flags->B && !flags->b){
-         size  = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
-         sizeBTemp = size;
-         size  = ceil((double)size / flags->size);
-      }
-      else if(flags->B && flags->b){
-         size  = stat_buf->st_size;
-         sizeBTemp = size;
-         size  = ceil((double)size / flags->size);
-      }
-      else{ // du without options - default
-         size = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
-      }
-   }
-
-   else if(S_ISLNK(stat_buf->st_mode)){
-      if(flags->b && !flags->B){// -b || -B 1 -b || -b -B 1  => -b
-         size = stat_buf->st_size; //count size of the link itself in bytes
-      }
-      else{ 
-         if(!flags->L){
-            if(flags->B && flags->b){
-               size  = stat_buf->st_size;
-               sizeBTemp = size;
-               size  = ceil((double)size / flags->size);
-            }
-            else size = 0;
-         }
-         else{ //dereference symbolic links
-            if (flags->B && !flags->b){
-               size  = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
-               sizeBTemp = size;
-               size  = ceil((double)size / flags->size);
-            }
-            else if(flags->B && flags->b){
-               size  = stat_buf->st_size;
-               sizeBTemp = size;
-               size  = ceil((double)size / flags->size);
-            }
-            else{//du without options - default
-               size = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
-            }
-         }
-         
-      }
-   }
-
-   //print all regular files if --all (-a) is active
-   if(flags->a) 
-      printf("%-8ld  %-10s\n", size, pathname);
-   //for -B option we want to show one size on screen but pass another to the total size calculation
-   if(flags->B) 
-      size = sizeBTemp;
-
-   return size;
-}
-
 int main(int argc, char* argv[], char* envp[]){
 
    flagMask flags;
@@ -397,6 +285,7 @@ int main(int argc, char* argv[], char* envp[]){
    if (S_ISDIR(stat_buf.st_mode)) {
 
       //sum the size of the current directory according to active options
+      //TODO: separar em função auxiliar
       if (flags.b){
          tempSize = stat_buf.st_size;
       }
@@ -424,7 +313,7 @@ int main(int argc, char* argv[], char* envp[]){
             exit(1);
          }
       
-         //guarda o path do subdiretorio
+         //guarda o path do subdiretorio 
          sprintf(pathname, "%s/%s", flags.path, direntp->d_name);
 
          if(!flags.L){ //use l stat if -L was not specified - show info about the link itself
@@ -439,46 +328,51 @@ int main(int argc, char* argv[], char* envp[]){
                exit(ERROR);
             }
          }
-      
+
+         //se encontrar subdiretorios
          if (S_ISDIR(stat_buf.st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
             int fd1[2], fd2[2];
             pid_t pid; 
 
+            //cria os pipes 
             if (pipe(fd1) < 0 || pipe(fd2) < 0){
                fprintf(stderr,"%s\n","Pipe error!\n");
                exit(ERROR); 
             }
 
-            if ((pid = fork()) < 0){
+            //criar processo filho e verifica erro do fork
+            if ((pid = fork()) < 0){  
                fprintf(stderr,"%s\n","Fork error!\n");
                exit(ERROR); 
             }
                
             if(pid > 0){ //PARENT
-               close(fd1[READ]); // vai escrever as flags logo não lê
-               close(fd2[WRITE]); // lê a informação dos ficheiros do filho por isso não escreve 
+               close(fd1[READ]); // Pipe 1 (pai -> filho) o processo pai vai escrever as flags no Pipe 1 (logo não lê do Pipe 1)
+               close(fd2[WRITE]); // Pipe 2 (filho -> pai) o pai lê o tamanho ocupado pelo filho (subdiretorio) e por isso não escreve no Pipe 2
 
-               write(fd1[WRITE],&flags,sizeof(flagMask));
-               close(fd1[WRITE]); 
+               write(fd1[WRITE],&flags,sizeof(flagMask)); // Pipe 1 (pai -> filho) o processo pai escreve as flags no Pipe 1
+               close(fd1[WRITE]);
 
-               read(fd2[READ],&subDirSize,sizeof(long int)); // lê a informação dos ficheiros do subdiretorio e o seu tamanho total
+               read(fd2[READ],&subDirSize,sizeof(long int)); // Pipe 2 (filho -> pai) o pai lê o tamanho ocupado pelo filho (subdiretorio)
                close(fd2[READ]);
 
+               // acrecenta-se ao tamanho total do diretorio atual o tamanho do seu subdiretorio
                totalSize += subDirSize;
             }
 
             else{ //CHILD
-               close(fd1[WRITE]); //vai ler as flags logo não escreve
-               close(fd2[READ]); //escreve informação sobre os seus ficheiros logo não lê
+               close(fd1[WRITE]); // Pipe 1 (pai -> filho) o processo filho vai ler as flags no Pipe 1 (logo não escreve no Pipe 1)
+               close(fd2[READ]); // Pipe 2 (filho -> pai) o filho escreve o seu tamanho no Pipe 2 e por isso não lê desse pipe
 
-               dup2(fd1[READ],STDIN_FILENO); //lê do pipe em vez de ler do STDIN
+               dup2(fd1[READ],STDIN_FILENO); // Quando o filho ler (read) do STDIN vai na verdade ler do Pipe 1 (onde tem as flags)
 
-               int saved_stdout = dup(STDOUT_FILENO);
-               dup2(fd2[WRITE],STDOUT_FILENO); //escreve no pipe em vez de na STDOUT
+               int oldStdout = dup(STDOUT_FILENO); // Guardar o descritor antigo do STDOUT
+               dup2(fd2[WRITE],STDOUT_FILENO); // Quando o filho escrever (write) no STDOUT vai na verdade escrever no Pipe 2
 
-               char stdout_str [10] = ""; 
-               sprintf(stdout_str , "%d", saved_stdout);
-               execl("searchDir", "searchDir", pathname, stdout_str, NULL);
+               char oldStdoutStr [10] = ""; 
+               sprintf(oldStdoutStr , "%d", oldStdout); // Converter o descritor antigo do STDOUT em string para passar como parâmetro no exec
+
+               execl("searchDir", "searchDir", pathname, oldStdoutStr, NULL);
                fprintf(stderr,"Exec error in %s\n",pathname);
                exit(ERROR);
             } 
@@ -491,6 +385,7 @@ int main(int argc, char* argv[], char* envp[]){
       rewinddir(dirp);
 
       //search for regular files and symbolic links in current directory
+      //TODO: separar em função auxiliar
       while ((direntp = readdir(dirp)) != NULL) {
          char *pathname; //para guardar o path de cada ficheiro ou subdiretório
 
@@ -518,7 +413,7 @@ int main(int argc, char* argv[], char* envp[]){
          }
       
          if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
-            totalSize += dirFileSize(&flags,&stat_buf,pathname);
+            totalSize += dirFileSize(&flags,&stat_buf,pathname,STDOUT_FILENO);
          } 
 
          free(pathname);  

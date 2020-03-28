@@ -13,11 +13,11 @@
  * @see checkArgs
  */
 
-#include <sys/stat.h>
-#include "types.h"
-
 #ifndef SIMPLEDU
 #define SIMPLEDU
+
+#include <sys/stat.h>
+#include "types.h"
 
 /** 
  * @brief Build flagMask struct (set active/inactive flags and path)
@@ -33,25 +33,11 @@
 int checkArgs(int argc, char* argv[], flagMask *flags);
 
 /**
- * @brief Check if the path exists
- * @param path the name of the path
- * @return OK if path exists, ERRORARGS otherwise
-*/
-int validatePath(char * path);
-
-/**
  * @brief Check if the size B
  * @param oparg size of B
  * @return OK if B SIZE is valid, ERROR_BSIZE otherwise
 */
 long int checkBsize(char *optarg);
-
-/**
- * @brief Show active flags on screen for testing purposes
- * @param flags flagMask to print
- * @param description describes the purpose for showing the flags on the creen
-*/
-void printFlags(flagMask * flags, char * description);
 
 /**
  * @brief Calculate the size occupied in disk by a single regular file
@@ -70,16 +56,6 @@ long int regularFileSize(flagMask *flags, struct stat *stat_buf);
  * @return the size occupied by the file
 */
 long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf);
-
-/**
- * @brief Calculate the size of a directory file and show it on the screen if --all is specified
- * Used to process each file of a directory and return its size
- * @param flags flagMask with active flags
- * @param stat_buf with info about block size and file size in bytes
- * @param pathname the name of the path of the file
- * @return the size occupied by the file
-*/
-long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname);
 
 /**
  * @brief Main function for simpledu command 
