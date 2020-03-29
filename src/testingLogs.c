@@ -9,12 +9,21 @@
 
 void sigHandler(int signo){
     if(signo == SIGUSR1){
+        logRECV_SIGNAL(SIGUSR1);
         // printf("SIGUSR1   -- %d -- %d\n",getpid(),getppid()); 
         kill(getpid(),SIGSTOP);
+        logSEND_SIGNAL(SIGSTOP,getpid());
     }
 }
 
-int main(void){
+int main(int argc, char *argv[]){
+
+    gettimeofday(&start, NULL);
+
+    if(logCREATE(argc,argv) == 1){
+        printf("SOMETING WOROND\n");
+        exit(1);
+    }
 
     struct sigaction action;
     action.sa_handler = sigHandler;
@@ -38,10 +47,11 @@ int main(void){
     int count = 0;
     while(1){
         printf("Child   -- %d -- %d ---- count = %d   ## ENVAR = %s\n",getpid(),getppid(),count,getenv("LOG_FILENAME")); 
-        writetolog("somethin");
+        logRECV_PIPE("received pipe...");
         sleep(3);
         count++;
     }
 
+    logEXIT(0);
     return 0;
 }

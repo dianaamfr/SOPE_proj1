@@ -5,13 +5,15 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <string.h>
-#include <time.h>
+#include <sys/time.h>
 #include "utils.h"
 
 void sigHandler(int signo){
     if(signo == SIGINT){
+        logRECV_SIGNAL(SIGINT);
         printf("STOPPING!! -- %d -- %d\n",getpid(),getppid());
         
+        logSEND_SIGNAL(SIGUSR1,-getpgrp());
         kill(-getpgrp(),SIGUSR1);
         
         char c;
@@ -23,18 +25,29 @@ void sigHandler(int signo){
         
         if(c == 'Y'){
             printf("CONTINUING!! -- %d -- %d\n", getpid(),getppid());
+            logSEND_SIGNAL(SIGCONT,-getpgrp());
             kill(-getpgrp(),SIGCONT);
         }
         else{
             printf("TERMINATING!! -- %d -- %d\n", getpid(),getppid());
+            logSEND_SIGNAL(SIGTERM,-getpgrp());
+            logEXIT(0);
             kill(-getpgrp(),SIGTERM);
         }
     }
 }
 
 int main(void){
+
+    gettimeofday(&start, NULL);
+
     int pid, ppid = getppid();
     setenv("LOG_FILENAME","simpledu.log",1);
+
+    if(logCREATE(0,NULL) == 1){
+        printf("SOMETING WOROND\n");
+        exit(1);
+    }
 
     printf("I AM THE PARENT -- %d -- %d\n",getpid(),getppid());
 
@@ -43,7 +56,7 @@ int main(void){
             pid = fork();
 
     if(pid == 0){
-        char *a[] = {"./tlogs.o",NULL};
+        char *a[] = {"./tlogs.o","bla","ble","bli",NULL};
         execvp(a[0],a);
     }
     else if(pid > 0){
@@ -72,11 +85,16 @@ int main(void){
 
             while(1){
                 printf("Parent  -- %d -- %d\n",getpid(),getppid());
-                writetolog("I am your father!");
+                if(rand() % 2 == 0)
+                    logSEND_PIPE("pipe was sent...");
+                else
+                    logENTRY(rand()%64,"entry ...");
                 sleep(1);
             }
         }
 
     }
+
+    logEXIT(0);
     exit(0);
 }
