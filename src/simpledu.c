@@ -14,6 +14,12 @@
 #include <errno.h>
 #include <signal.h>
 
+int readFlags = 0;
+void sig_handler(int signo)
+{
+   readFlags = 1;
+}
+
 long int checkBsize(char *optarg) {
 
    int alphabet = 0, number = 0;
@@ -249,7 +255,6 @@ long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf){
 }
 
 int main(int argc, char* argv[], char* envp[]){
-
    flagMask flags;
    DIR *dirp;
    struct dirent *direntp;
@@ -260,6 +265,30 @@ int main(int argc, char* argv[], char* envp[]){
    char oldStdoutStr[10] = "";
    bool isSubDir = false;
 
+   sigset_t pending_signals;
+
+   sigset_t mask;
+   struct sigaction action;
+
+   //clean all fields of 'action', including 'sa_mask' and 'sa_flags'
+   memset (&action, 0, sizeof(action));
+   //install handler for SIGTERM
+   action.sa_handler = sig_handler;
+   sigaction(SIGTERM, &action, 0);
+   // temporarily block SIGTERM
+   sigemptyset (&mask);
+   sigaddset (&mask, SIGUSR1);
+   //set new mask and get original mask
+   sigprocmask(SIG_BLOCK, &mask, NULL);
+ 
+   if(sigpending (&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1))
+   {
+      sig_handler(SIGUSR1);
+
+   }
+
+
+
    if(checkArgs(argc,argv,&flags) != OK){
       fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
       exit(ERRORARGS);
@@ -267,20 +296,11 @@ int main(int argc, char* argv[], char* envp[]){
    
    //se o path não for válido então devemos verificar se estamos a processar um subdiretorio
    if(validatePath(flags.path) != OK){
-      if(argc != 2){
-         fprintf(stderr, "Invalid path error in %s\n", flags.path);
+      if(!readFlags){
+         fprintf(stderr,"Invalid path: %s\n",flags.path);
          exit(ERRORARGS);
       }
-
-      //se estivermos a processar um subdiretorio então o argv[1] é um descritor
-      for(int i = 0; i < strlen(argv[1]); i++){
-         if(isdigit(argv[1][i]) == 0){
-            fprintf(stderr, "Invalid path error in %s\n", flags.path);
-            exit(ERRORARGS);
-         }
-      }
-
-      //problema a resolver com sinais ? Se o nome do path dado inicialmente for um numero temos aqui um problema
+      
       if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){ 
          fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
          exit(ERRORARGS);
@@ -407,7 +427,7 @@ int main(int argc, char* argv[], char* envp[]){
                dup2(fd1[READ],STDIN_FILENO); // Quando o filho ler (read) do STDIN vai na verdade ler do Pipe 1 (onde tem as flags)
 
                dup2(fd2[WRITE],STDOUT_FILENO); // Quando o filho escrever (write) no STDOUT vai na verdade escrever no Pipe 2
-
+               kill(pid,SIGUSR1);
                execl("simpledu", "simpledu", oldStdoutStr, NULL);
                fprintf(stderr,"Exec error in %s\n",pathname);
                exit(ERROR);
