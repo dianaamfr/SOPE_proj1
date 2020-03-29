@@ -262,13 +262,7 @@ int main(int argc, char* argv[], char* envp[]){
    sigset_t pending_signals;
 
    sigset_t mask;
-   struct sigaction action;
 
-   //clean all fields of 'action', including 'sa_mask' and 'sa_flags'
-   memset (&action, 0, sizeof(action));
-   //install handler for SIGUSR1
-   action.sa_handler = SIG_BLOCK;
-   sigaction(SIGUSR1, &action, 0);
    // temporarily block SIGUSR1
    sigemptyset (&mask);
    sigaddset (&mask, SIGUSR1);
@@ -290,7 +284,6 @@ int main(int argc, char* argv[], char* envp[]){
             fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
             exit(ERRORARGS);
          }
-         sigprocmask(SIG_BLOCK, &mask, NULL);
       } 
       // 2) Não há sigusr1 pendentes logo o path é inválid
       else{
