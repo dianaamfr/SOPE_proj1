@@ -14,12 +14,6 @@
 #include <errno.h>
 #include <signal.h>
 
-int readFlags = 0;
-void sig_handler(int signo)
-{
-   readFlags = 1;
-}
-
 long int checkBsize(char *optarg) {
 
    int alphabet = 0, number = 0;
@@ -272,31 +266,34 @@ int main(int argc, char* argv[], char* envp[]){
 
    //clean all fields of 'action', including 'sa_mask' and 'sa_flags'
    memset (&action, 0, sizeof(action));
-   //install handler for SIGTERM
-   action.sa_handler = sig_handler;
-   sigaction(SIGTERM, &action, 0);
-   // temporarily block SIGTERM
+   //install handler for SIGUSR1
+   action.sa_handler = SIG_BLOCK;
+   sigaction(SIGUSR1, &action, 0);
+   // temporarily block SIGUSR1
    sigemptyset (&mask);
    sigaddset (&mask, SIGUSR1);
-   //set new mask and get original mask
+   //set new mask
    sigprocmask(SIG_BLOCK, &mask, NULL);
- 
-   if(sigpending (&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1))
-   {
-      sig_handler(SIGUSR1);
-
-   }
-
-
 
    if(checkArgs(argc,argv,&flags) != OK){
       fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
       exit(ERRORARGS);
    }
    
-   //se o path não for válido então devemos verificar se estamos a processar um subdiretorio
+   //se o path não for válido então:
+   // 1) O argumento é o descritor do stdout -> processo vai ler subdiretorio e precisa de ler as flags do pipe
+   // 2) O path é inválido
    if(validatePath(flags.path) != OK){
-      if(!readFlags){
+      // 1) Se há algum sigusr1 pendente então deve ler-se as flags do pipe
+       if(sigpending (&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1)){
+         if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){ 
+            fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
+            exit(ERRORARGS);
+         }
+         sigprocmask(SIG_BLOCK, &mask, NULL);
+      } 
+      // 2) Não há sigusr1 pendentes logo o path é inválid
+      else{
          fprintf(stderr,"Invalid path: %s\n",flags.path);
          exit(ERRORARGS);
       }
