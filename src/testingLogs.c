@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "utils.h"
+#include "logging.h"
 
 void sigHandler(int signo){
     if(signo == SIGUSR1){
@@ -19,6 +19,12 @@ void sigHandler(int signo){
 int main(int argc, char *argv[]){
 
     gettimeofday(&start, NULL);
+    read(STDIN_FILENO,&start.tv_sec,sizeof(time_t));
+
+    printf("WHAT SHIT IS IN START CHILD: %ld -- %ld\n",start.tv_sec, start.tv_usec);
+
+    if(start.tv_sec == 0)
+        exit(1);
 
     if(logCREATE(argc,argv) == 1){
         printf("SOMETING WOROND\n");

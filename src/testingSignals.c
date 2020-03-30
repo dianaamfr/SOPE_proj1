@@ -6,7 +6,9 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/time.h>
-#include "utils.h"
+#include "logging.h"
+#define READ 0
+#define WRITE 1
 
 void sigHandler(int signo){
     if(signo == SIGINT){
@@ -40,6 +42,9 @@ void sigHandler(int signo){
 int main(void){
 
     gettimeofday(&start, NULL);
+    printf("WHAT SHIT IS IN START PARENT: %ld -- %ld\n",start.tv_sec, start.tv_usec);
+
+    int pipeStart[2];
 
     int pid, ppid = getppid();
     setenv("LOG_FILENAME","simpledu.log",1);
@@ -55,7 +60,12 @@ int main(void){
         if(getppid() == ppid)
             pid = fork();
 
+    pipe(pipeStart);
+
     if(pid == 0){
+        dup2(pipeStart[READ], STDIN_FILENO);
+        close(pipeStart[WRITE]);
+
         char *a[] = {"./tlogs.o","bla","ble","bli",NULL};
         execvp(a[0],a);
     }
@@ -82,6 +92,16 @@ int main(void){
                 fprintf(stderr,"Unable to install SIGINT handler\n");
                 exit(1);
             }
+            
+            int fout = dup(STDOUT_FILENO);
+            dup2(pipeStart[WRITE], STDOUT_FILENO);
+            close(pipeStart[READ]);
+            int error = 0;
+            if(write(pipeStart[WRITE],&start.tv_sec,sizeof(time_t)) == -1)
+                error = 1;
+            dup2(fout,STDOUT_FILENO);
+            printf("WHAT SHIT IS IN START PARENT: %ld -- %ld\n",start.tv_sec, start.tv_usec);
+            if(error) exit(1);
 
             while(1){
                 printf("Parent  -- %d -- %d\n",getpid(),getppid());

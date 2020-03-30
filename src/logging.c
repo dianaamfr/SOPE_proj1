@@ -4,24 +4,23 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-
-typedef enum{CREATE, EXIT, RECV_SIGNAL, SEND_SIGNAL,RECV_PIPE, SEND_PIPE, ENTRY} action;
+#include "logging.h"
 
 int appendLogInfo(action a, char * info){
 
-    char *actions[] = {"CREATE", "EXIT", "RECV_SIGNAL", "SEND_SIGNAL", "RECV_PIPE", "SEND_PIPE", "ENTRY"};
-
-    struct timeval stop;
-
-    gettimeofday(&stop, NULL);
-    double time = (double) (stop.tv_sec - start.tv_sec) * 1000.0 + (double) (stop.tv_usec - start.tv_usec) / 1000.0;
-
     int logFd = 0;
-    char logBuffer[200];
-
-    sprintf(logBuffer,"%10.2f - %08d - %11s - %s\n",time,getpid(),actions[a],info);
 
     if ((logFd = open(getenv("LOG_FILENAME"), O_CREAT | O_WRONLY | O_APPEND, 0644)) >= 0) {
+
+        char *actions[] = {"CREATE", "EXIT", "RECV_SIGNAL", "SEND_SIGNAL", "RECV_PIPE", "SEND_PIPE", "ENTRY"};
+
+        struct timeval stop;
+        gettimeofday(&stop, NULL);
+
+        double time = (double) (stop.tv_sec - start.tv_sec) * 1000.0 + (double) (stop.tv_usec - start.tv_usec) / 1000.0;
+        char logBuffer[200];
+
+        sprintf(logBuffer,"%10.2f - %08d - %11s - %s\n",time,getpid(),actions[a],info);
         
         write(logFd, logBuffer, strlen(logBuffer));
         close(logFd);
