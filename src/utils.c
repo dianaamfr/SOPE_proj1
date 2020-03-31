@@ -1,4 +1,4 @@
-#include "aux.h"
+#include "utils.h"
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -394,9 +394,8 @@ int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf){
    }
 }
 
-void searchSubdirectories(){}
-
-long int searchFiles(struct dirent * direntp, DIR *dirp, struct stat * stat_buf, flagMask * flags, int oldStdout){
+long int searchFiles(DIR *dirp, struct stat * stat_buf, flagMask * flags, int oldStdout){
+   struct dirent *direntp;
    long int size = 0;
 
    //search for regular files and symbolic links in current directory
@@ -427,3 +426,104 @@ long int searchFiles(struct dirent * direntp, DIR *dirp, struct stat * stat_buf,
    return size;
 }
 
+long int searchSubdirs(DIR *dirp,struct stat * stat_buf, flagMask * flags, int stdout){
+   struct dirent *direntp;
+   long int totalSize=0;
+
+   while ((direntp = readdir(dirp)) != NULL) {
+
+      char * pathname = malloc(strlen(flags->path) + 1 + strlen(direntp->d_name) + 1);
+      if (pathname == NULL) error_sys("Memory Allocation error\n");
+      sprintf(pathname, "%s/%s", flags->path, direntp->d_name); //guarda o path do subdiretorio 
+
+      if(getStatus(flags->L,stat_buf,pathname)){
+         fprintf(stderr, "Stat error in %s\n", pathname);
+         exit(ERRORARGS);
+      }
+
+      //processa os subdiretorios
+      if (S_ISDIR(stat_buf->st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
+         totalSize += processSubdir(stdout,flags,pathname);
+      }
+
+      free(pathname);
+   }
+
+   return totalSize;
+}
+
+long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
+
+   int fd1[2], fd2[2];
+   long int subDirSize;
+   pid_t pid; 
+
+   //cria os pipes 
+   if (pipe(fd1) < 0 || pipe(fd2) < 0)
+      error_sys("Pipe error!\n");
+
+
+   //criar processo filho e verifica erro do fork
+   if ((pid = fork()) < 0) 
+      error_sys("Fork error!\n");
+      
+   if(pid > 0){ //PARENT
+      close(fd1[READ]); // Pipe 1 (pai -> filho) o processo pai vai escrever as flags no Pipe 1 (logo não lê do Pipe 1)
+      close(fd2[WRITE]); // Pipe 2 (filho -> pai) o pai lê o tamanho ocupado pelo filho (subdiretorio) e por isso não escreve no Pipe 2
+
+      //save flags current path and replace it by the path of the subdirectory
+      char tempPath[MAX_PATH];
+      strcpy(tempPath,flags->path);
+      memset(flags->path,'\0',MAX_PATH);
+      strcpy(flags->path, subDirPath);
+
+      write(fd1[WRITE],flags,sizeof(flagMask)); // Pipe 1 (pai -> filho) o processo pai escreve as flags no Pipe 1
+      close(fd1[WRITE]);
+
+      //recover original path
+      memset(flags->path,'\0',MAX_PATH);
+      strcpy(flags->path,tempPath);
+
+      read(fd2[READ],&subDirSize,sizeof(long int)); // Pipe 2 (filho -> pai) o pai lê o tamanho ocupado pelo filho (subdiretorio)
+      close(fd2[READ]);
+   }
+
+   else{ //CHILD
+      close(fd1[WRITE]); // Pipe 1 (pai -> filho) o processo filho vai ler as flags no Pipe 1 (logo não escreve no Pipe 1)
+      close(fd2[READ]); // Pipe 2 (filho -> pai) o filho escreve o seu tamanho no Pipe 2 e por isso não lê desse pipe
+
+      dup2(fd1[READ],STDIN_FILENO); // Quando o filho ler (read) do STDIN vai na verdade ler do Pipe 1 (onde tem as flags)
+
+      dup2(fd2[WRITE],STDOUT_FILENO); // Quando o filho escrever (write) no STDOUT vai na verdade escrever no Pipe 2
+      kill(pid,SIGUSR1);
+
+      char stdoutStr[10];
+
+      //convert file descriptor to string to pass as an argument
+      sprintf(stdoutStr , "%d", stdout);
+
+      execl("simpledu", "simpledu", stdoutStr, NULL);
+      error_sys("Exec error!\n");
+   } 
+
+   // acrecenta-se ao tamanho total do diretorio atual o tamanho do seu subdiretorio
+   return subDirSize;
+}
+
+void blockSIGUSR1(){
+   sigset_t mask;
+
+   // temporarily block SIGUSR1
+   sigemptyset (&mask);
+   sigaddset (&mask, SIGUSR1);
+   //set new mask
+   sigprocmask(SIG_BLOCK, &mask, NULL);
+}
+
+int pendingSIGUSR1(){
+   sigset_t pending_signals;
+
+   if(sigpending (&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1))
+      return OK;
+   return ERROR;
+}

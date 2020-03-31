@@ -94,10 +94,63 @@ void error_sys(char *msg);
 */
 int getStatus(int flag_L, struct stat * stat_buf, char * path);
 
+/**
+ * @brief 
+ * @param 
+ * @param 
+ * @return 
+*/
 double sizeInBlocks(long int totalSize, long int Bsize);
 
+/**
+ * @brief Get file status with lstat() if L flag is inactive or stat() if L flag is active
+ * @param 
+ * @param
+ * @param stat_buf where the info about the file is returned
+ * @return OK if no problems occured, ERROR otherwise
+*/
 int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf);
 
-long int searchFiles(struct dirent * direntp, DIR *dirp, struct stat * stat_buf, flagMask * flags, int oldStdout);
+/**
+ * @brief 
+ * @param 
+ * @param stat_buf where the info about the file is returned
+ * @param 
+ * @param 
+ * @return OK if no problems occured, ERROR otherwise
+*/
+long int searchFiles(DIR *dirp, struct stat * stat_buf, flagMask * flags, int oldStdout);
+
+/**
+ * @brief 
+ * @param 
+ * @param stat_buf where the info about the file is returned
+ * @param 
+ * @param
+ * @return
+*/
+long int searchSubdirs(DIR *dirp,struct stat * stat_buf, flagMask * flags, int stdout);
+
+/**
+ * @brief 
+ * @param 
+ * @param 
+ * @param 
+ * @return 
+*/
+long int processSubdir(int stdout, flagMask * flags, char * subDirPath);
+
+/**
+ * @brief 
+ * @return OK if no problems occured, ERROR otherwise
+*/
+void blockSIGUSR1();
+
+/**
+ * @brief 
+ * @return OK if no problems occured, ERROR otherwise
+*/
+int pendingSIGUSR1();
+
 
 #endif
