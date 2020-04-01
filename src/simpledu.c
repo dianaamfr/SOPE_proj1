@@ -15,6 +15,7 @@
 #include <signal.h>
 
 int main(int argc, char* argv[], char* envp[]){
+
    flagMask flags;
    DIR *dirp;
    struct stat stat_buf;
@@ -25,19 +26,19 @@ int main(int argc, char* argv[], char* envp[]){
    
    blockSIGUSR1();
 
-   //if USR1 signal is pending we are reading a subdirectory
-   if(pendingSIGUSR1() == OK){
-      //read Pipe with flags
+   if(pendingSIGUSR1() == OK){ // If SIGUSR1 is pending, then we are currently in a subdirectory
+      
+      // Read the flags from pipe
       if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1)
          error_sys("Error reading pipe\n");
       isSubDir = true;
 
-      // save stdout descriptor 
+      // Save old stdout descriptor 
       oldStdout = atoi(argv[1]);
    }
-   //otherwise this is the parent (main directory)
-   else{
-      // the arguments(flags) should be checked
+   else{ // Otherwise, we are in the parent/main directory
+
+      // The args/flags must be checked
       if(checkArgs(argc,argv,&flags) != OK){
          fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
          exit(ERRORARGS);
@@ -48,10 +49,9 @@ int main(int argc, char* argv[], char* envp[]){
          exit(ERRORARGS);
       }
 
-      //the stdout descriptor should be saved to be sent to the child processes
+      // The old stdout descriptor should be saved to be sent to the child processes
       oldStdout = dup(STDOUT_FILENO);
 
-      //print flags for testing purposee
       printFlags(&flags,"Running"); 
    }
 

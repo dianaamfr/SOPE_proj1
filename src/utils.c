@@ -15,27 +15,18 @@
 #include <errno.h>
 #include <signal.h>
 
-int validatePath(char * path){
+void error_sys(char *msg){
 
-   struct stat stat_buf;
+   fprintf(stderr,"%s\n",msg);
 
-   //if empty path consider the current directory
-   if(strcmp(path, "") == OK){
-      memset(path,0,MAX_PATH);
-      strcpy(path, ".");
-      return OK;
-   }
-
-   if(lstat(path, &stat_buf) == OK) 
-      return OK;
-   
-   return ERROR;
-}
+   exit(ERROR);
+} 
 
 void printFlags(flagMask * flags, char * description){
+   
    printf("###########################\n");
 
-   printf("%s...\n",description);
+   printf("%s...\n", description);
 
    printf("a: %d\n", flags->a);
 
@@ -50,7 +41,7 @@ void printFlags(flagMask * flags, char * description){
    printf("S: %d\n", flags->S);
 
    printf("max-depth: %d", flags->d);
-   if(flags->d)
+   if (flags->d)
       printf(" value=%d", flags->N);
    printf("\n");
 
@@ -61,10 +52,35 @@ void printFlags(flagMask * flags, char * description){
    printf("###########################\n");
 }
 
-long int checkBsize(char *optarg) {
+void blockSIGUSR1(){
+
+   sigset_t mask;
+
+   // Temporarily blocking SIGUSR1
+   sigemptyset (&mask);
+   sigaddset (&mask, SIGUSR1);
+
+   // Set new mask
+   sigprocmask(SIG_BLOCK, &mask, NULL);
+}
+
+int pendingSIGUSR1(){
+
+   sigset_t pending_signals;
+
+   // Checking for pending SIGUSR1
+   if (sigpending(&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1))
+      return OK;
+
+   return ERROR;
+}
+
+long int checkBsize(char * optarg) {
 
    int alphabet = 0, number = 0;
-   for (int i = 0; optarg[i] != '\0'; i++) {
+   
+   for (int i = 0; optarg[i] != '\0'; i++){
+
       if (isalpha(optarg[i])) 
          alphabet++;
       else if (isdigit(optarg[i])) 
@@ -84,8 +100,7 @@ long int checkBsize(char *optarg) {
       else if (strcmp(optarg, "T") == 0) return pow(1024,4);
       else if (strcmp(optarg, "P") == 0) return pow(1024,5);
       else if (strcmp(optarg, "E") == 0) return pow(1024,6);
-      else 
-         return ERROR_BSIZE;
+      else return ERROR_BSIZE;
    }
    else if (alphabet == 2 && number == 0) {
       if (strcmp(optarg, "KB") == 0) return 1000;
@@ -114,7 +129,7 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
    printFlags(&tempFlags, "TESTING");
    /*...*/
    
-   while(1){         
+   while(1) {         
       
       static struct option long_options[] = {
          {"all",           no_argument,         &tempFlags.a,     1 },
@@ -127,23 +142,29 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
          {0,               0,                   0,                0 }
       };
 
+      // The short_options array, as a string, is interpreted 
+      // as a no_argument option for every alone character and 
+      // a required_argument option for every character followed by a colon (:)
       c = getopt_long(argc, argv, "abB:lLSd:", long_options, &option_index);
+      // c contains the current arg from argv that is being analyzed
 
       if (c == -1)
          break;
       
       switch (c){
 
-         case 0:
+         case 0: // This is a default option as found in the legit Linux Man Pages source 
             // printf("option %s", long_options[option_index].name);
-            if (optarg)
+            // if (optarg)
                // printf(" with arg %s", optarg);
             // printf("\n");
+
             break;
 
          case 'a':
             // printf("option a\n");
             tempFlags.a = 1;
+
             break;
 
          case 'b':
@@ -160,52 +181,64 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
             // printf("option (B) block-size with value '%s'\n", optarg);
             tempFlags.B = 1;
             size_b = checkBsize(optarg);
+
             if (size_b == ERROR_BSIZE){
                fprintf(stderr, "%s: invalid -B argument: '%s'\n",argv[0],optarg);
                return ERRORARGS;
             }
 
-            if(size_b == 1 && tempFlags.b){ //if -B 1 and -b assume -b (order is irrelevant)
+            if (size_b == 1 && tempFlags.b){ //if -B 1 and -b 1, then assume -b (order is irrelevant)
                tempFlags.size = 0;
                tempFlags.B = 0;
             }
-            else tempFlags.size = size_b; //if -b is not active 
+            else 
+               tempFlags.size = size_b; //if -b is not active 
+
             break;
 
          case 'l':
             // printf("option l\n");
             tempFlags.l = 1;
+
             break;
 
          case 'L':
             // printf("option L\n");
             tempFlags.L = 1;
+
             break;
 
          case 'S':
             // printf("option S\n");
             tempFlags.S = 1;
+
             break;
          
          case 'd':
             // printf("option (d) max-depth with value '%s'\n", optarg);
             tempFlags.d = 1;
             tempFlags.N = atoi(optarg);
+
             break;
 
-         case '?':
+         case '?': // Unkown option in argv
             /* getopt_long already printed an error message. */
             // printf("Exiting...\n");
             return ERRORARGS;
+
             break;
 
-         default:
+         default: // Some other error may have occurred 
+
             printf("Error: getopt returned character code 0%o \n", c);
             return ERRORARGS;
+
             break;
         }
    }
 
+   // This reveals non-option args, like loose strings
+   // In our case, it may represent the path
    if (optind < argc){
       // printf("non-option ARGV-elements: ");
       while (optind < argc){
@@ -225,17 +258,79 @@ int checkArgs(int argc, char* argv[], flagMask *flags){
    flags->S = tempFlags.S;
    flags->d = tempFlags.d;
    flags->N = tempFlags.N;
-   flags->size = tempFlags.size;
-
-   /*if(strcmp(tempFlags.size,"") == 0)
-      strcpy(flags->size,"1");
-   else
-      strcpy(flags->size, tempFlags.size);*/
-   
+   flags->size = tempFlags.size;   
    
    strcpy(flags->path, tempFlags.path);
    
    return OK;
+}
+
+int validatePath(char * path){
+
+   struct stat stat_buf;
+
+   // If the path is empty, consider the current directory
+   if (strcmp(path, "") == OK){
+      memset(path, 0, MAX_PATH);
+      strcpy(path, ".");
+      return OK;
+   }
+
+   if (lstat(path, &stat_buf) == OK) 
+      return OK;
+   
+   return ERROR;
+}
+
+int getStatus(int flag_L, struct stat * stat_buf, char * path){
+   
+   if(!flag_L){ // Using lstat, if -L not specified - showing info about the link itself
+      if (lstat(path, stat_buf)) 
+         return ERRORARGS;
+   }
+   else{ // Using stat to follow symbolic links - dereferencing the link
+      if (stat(path, stat_buf))
+         return ERRORARGS;
+   }
+
+   return OK;
+}
+
+int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf){
+   if (flags_b){
+      return stat_buf->st_size;
+   }
+   else { 
+      return stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
+   }
+}
+
+long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout){
+   
+   struct dirent *direntp;
+   struct stat stat_buf;
+   long int totalSize=0;
+
+   while ((direntp = readdir(dirp)) != NULL) {
+
+      char * pathname = malloc(strlen(flags->path) + 1 + strlen(direntp->d_name) + 1);
+      if (pathname == NULL) error_sys("Memory Allocation error\n");
+      sprintf(pathname, "%s/%s", flags->path, direntp->d_name); //guarda o path do subdiretorio 
+
+      if(getStatus(flags->L,&stat_buf,pathname)){
+         fprintf(stderr, "Stat error in %s\n", pathname);
+         exit(ERRORARGS);
+      }
+
+      //processa os subdiretorios
+      if (S_ISDIR(stat_buf.st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
+         totalSize += processSubdir(stdout,flags,pathname);
+      }
+
+      free(pathname);
+   }
+
+   return totalSize;
 }
 
 long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, int stdout_fd){
@@ -366,34 +461,6 @@ long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf){
    }
 }
 
-void error_sys(char *msg){
-   fprintf(stderr,"%s\n",msg);
-   exit(ERROR);
-} 
-
-int getStatus(int flag_L, struct stat * stat_buf, char * path){
-   //use l stat if -L was not specified - show info about the link itself
-   if(!flag_L){
-      if (lstat(path, stat_buf)) 
-         return ERRORARGS;
-   }
-   //use stat to follow symbolic links - dereference the link
-   else{
-      if (stat(path, stat_buf))
-         return ERRORARGS;
-   }
-   return OK;
-}
-
-int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf){
-   if (flags_b){
-      return stat_buf->st_size;
-   }
-   else { 
-      return stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
-   }
-}
-
 long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout){
    struct dirent *direntp;
    struct stat stat_buf;
@@ -425,33 +492,6 @@ long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout){
    }
 
    return size;
-}
-
-long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout){
-   struct dirent *direntp;
-   struct stat stat_buf;
-   long int totalSize=0;
-
-   while ((direntp = readdir(dirp)) != NULL) {
-
-      char * pathname = malloc(strlen(flags->path) + 1 + strlen(direntp->d_name) + 1);
-      if (pathname == NULL) error_sys("Memory Allocation error\n");
-      sprintf(pathname, "%s/%s", flags->path, direntp->d_name); //guarda o path do subdiretorio 
-
-      if(getStatus(flags->L,&stat_buf,pathname)){
-         fprintf(stderr, "Stat error in %s\n", pathname);
-         exit(ERRORARGS);
-      }
-
-      //processa os subdiretorios
-      if (S_ISDIR(stat_buf.st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
-         totalSize += processSubdir(stdout,flags,pathname);
-      }
-
-      free(pathname);
-   }
-
-   return totalSize;
 }
 
 long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
@@ -510,22 +550,4 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
 
    // acrecenta-se ao tamanho total do diretorio atual o tamanho do seu subdiretorio
    return subDirSize;
-}
-
-void blockSIGUSR1(){
-   sigset_t mask;
-
-   // temporarily block SIGUSR1
-   sigemptyset (&mask);
-   sigaddset (&mask, SIGUSR1);
-   //set new mask
-   sigprocmask(SIG_BLOCK, &mask, NULL);
-}
-
-int pendingSIGUSR1(){
-   sigset_t pending_signals;
-
-   if(sigpending (&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1))
-      return OK;
-   return ERROR;
 }

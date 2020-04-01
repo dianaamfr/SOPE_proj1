@@ -9,8 +9,6 @@
  * or by an at symbol @@.
  * @see http://fnch.users.sourceforge.net/doxygen_c.html
  * @see https://wiki.scilab.org/Doxygen%20documentation%20Examples for more information.
- * @note Credits to the "Example of Parsing Long Options with getopt_long"
- * @see checkArgs
  */
 
 #ifndef SIMPLEDU

@@ -18,7 +18,7 @@
  * @brief Mask to save the active flags of simpledu.
  *
  * Firstly instantiated in main function, it will save the user options
- * as well as the current path being search at any moment.
+ * as well as the current path being searched at any moment.
  */
 typedef struct flagMask{
   int  l;                                   /*< -l, --count-links */
