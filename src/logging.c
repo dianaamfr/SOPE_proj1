@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "logging.h"
+#include "types.h"
 
 int appendLogInfo(action a, char * info){
 
@@ -15,20 +16,22 @@ int appendLogInfo(action a, char * info){
         char *actions[] = {"CREATE", "EXIT", "RECV_SIGNAL", "SEND_SIGNAL", "RECV_PIPE", "SEND_PIPE", "ENTRY"};
 
         struct timeval stop;
-        gettimeofday(&stop, NULL);
+        gettimeofday(&stop, NULL); // Getting the current instant 
 
+        // Calculating the milliseconds elapsed from the init instant
         double time = (double) (stop.tv_sec - start.tv_sec) * 1000.0 + (double) (stop.tv_usec - start.tv_usec) / 1000.0;
         char logBuffer[200];
 
-        sprintf(logBuffer,"%10.2f - %08d - %11s - %s\n",time,getpid(),actions[a],info);
+        sprintf(logBuffer,"%10.2f - %08d - %11s - %s\n", time, getpid(), actions[a], info);
         
+        // Appending info to the log file
         write(logFd, logBuffer, strlen(logBuffer));
         close(logFd);
 
-        return 0;
+        return OK;
     }
 
-    return 1;
+    return ERROR;
 }
 
 int logCREATE(int argc, char* args[]){
@@ -42,7 +45,6 @@ int logCREATE(int argc, char* args[]){
                 strcat(info,", ");
             }
         }
-
     else
         sprintf(info,"%s","void");
 

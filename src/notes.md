@@ -17,3 +17,5 @@ needed in simpledu.h??
 doxygen author group
 
 makefile really needs -lm ? we could copy libm.a to a lib folder... question the professor
+
+format when simpledu ./ <- directory that way

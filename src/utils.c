@@ -1,4 +1,3 @@
-#include "utils.h"
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -14,6 +13,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
+#include "utils.h"
 
 void error_sys(char *msg){
 

@@ -1,5 +1,3 @@
-#include "simpledu.h"
-#include "utils.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -13,8 +11,18 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/time.h>
+#include "simpledu.h"
+#include "utils.h"
+#include "logging.h"
 
 int main(int argc, char * argv[], char * envp[]){
+
+   setenv("LOG_FILENAME","simpledu.log",1);
+
+   gettimeofday(&start, NULL);
+
+   logCREATE(argc,argv);
 
    flagMask flags;
    DIR *dirp;
