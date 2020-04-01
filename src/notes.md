@@ -18,8 +18,8 @@ doxygen author group
 
 makefile really needs -lm ? we could copy libm.a to a lib folder... question the professor
 
-format when simpledu ./ <- directory that way
+Check output format when: simpledu ./ 
 
 Check all includes if needed
 
-Check for untraceable printf
+Check for untraceable printfs
