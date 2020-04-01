@@ -122,8 +122,8 @@ int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf);
 long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout);
 
 /**
- * @brief 
- * @param 
+ * @brief sum the size of the subdirectories in one directory
+ * @param dirp directory stream 
  * @param stat_buf where the info about the directory is stored
  * @param flags flagMask with active flags
  * @param oldStdout the descriptor to be use to print the sizes to the console
@@ -132,22 +132,26 @@ long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout);
 long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout);
 
 /**
- * @brief 
- * @param 
+ * @brief get the size of one subdirectory
+ * Uses fork() to create a new process, exec() to execute the simpledu for that process and pipe() to create
+ * 2 pipes, one to send the flags to the subdirectory process and other toreceive the size of the subdirectory
+ * @param stdout the descriptor to be sent to the new process
  * @param flags flagMask with active flags
- * @param 
- * @return 
+ * @param subDirPath the path of the subdirectory to process
+ * @return the size of the subdirectory
 */
 long int processSubdir(int stdout, flagMask * flags, char * subDirPath);
 
 /**
- * @brief 
+ * @brief Block USR1 signal
  * @return OK if no problems occured, ERROR otherwise
 */
 void blockSIGUSR1();
 
 /**
- * @brief 
+ * @brief Check for pending USR1 signals
+ * USR1 is sent by a child process to itself -> the only process that should not have pending 
+ * signals when it starts running is the first process to run on the first directory
  * @return OK if no problems occured, ERROR otherwise
 */
 int pendingSIGUSR1();
