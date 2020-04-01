@@ -71,4 +71,10 @@ int logSEND_PIPE(char * msg);
 */
 int logENTRY(int bytes, char * path);
 
+/**
+ * @brief Clears content of log file at (path) LOG_FILENAME env variable
+ * @return OK if successful, ERROR if not
+*/
+int clearLogfile();
+
 #endif

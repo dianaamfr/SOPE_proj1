@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <signal.h>
 #include "utils.h"
+#include "logging.h"
 
 void error_sys(char *msg){
 
@@ -73,6 +74,59 @@ int pendingSIGUSR1(){
       return OK;
 
    return ERROR;
+}
+
+void sigHandler(int signo){
+
+   if (signo == SIGINT){ // Ignored by every process except the parent
+
+      logRECV_SIGNAL(SIGINT);
+               
+      logSEND_SIGNAL(SIGUSR2, -getpgrp());
+      kill(-getpgrp(), SIGUSR2); // Sending a SIGUSR2 to all child processess
+      
+      printf("\nSTOPPING! - %d - %d\n", getpid(), getppid());
+
+      char c;
+      printf("Continue? (Y or N) ");
+      scanf("%c",&c);
+      while ((getchar()) != '\n');
+
+      printf("You entered: %c\n", c);
+      
+      if (c == 'Y'){
+         printf("CONTINUING! - %d - %d\n", getpid(), getppid());
+         
+         logSEND_SIGNAL(SIGCONT,-getpgrp());
+         kill(-getpgrp(),SIGCONT); // Sending a SIGCONT to all processess, including the parent himself
+      }
+      else{
+         printf("TERMINATING! - %d - %d\n", getpid(), getppid());
+         
+         logSEND_SIGNAL(SIGTERM, -getpgrp());
+         logEXIT(0);
+         kill(-getpgrp(), SIGTERM); // Sending a SIGTERM to all processess, including the parent himself
+      }
+   }
+
+   if(signo == SIGUSR2){ // Ignored by the parent process only
+      logRECV_SIGNAL(SIGUSR2);    
+
+      logSEND_SIGNAL(SIGSTOP, getpid());    
+      kill(getpid(), SIGSTOP); // Sending a SIGSTOP to all child processess themselves
+   }
+}
+
+void attachSIGHandler(struct sigaction action, int SIG, __sighandler_t handler){
+   
+   action.sa_handler = handler;
+   sigemptyset(&action.sa_mask);
+   action.sa_flags = 0;
+
+   if (sigaction(SIG, &action, NULL) < 0){
+      fprintf(stderr,"Unable to install SIG handler\n");
+      exit(1);
+   }
 }
 
 long int checkBsize(char * optarg) {

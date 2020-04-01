@@ -104,3 +104,11 @@ int logENTRY(int bytes, char * path){
 
     return appendLogInfo(ENTRY, info);
 }
+
+int clearLogfile(){
+
+    if (close(open(getenv("LOG_FILENAME"), O_RDONLY | O_WRONLY | O_TRUNC)) >= 0)
+        return OK;
+    
+    return ERROR;
+}

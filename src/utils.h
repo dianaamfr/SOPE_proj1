@@ -43,6 +43,38 @@ void blockSIGUSR1();
 int pendingSIGUSR1();
 
 /**
+ * @brief Signal Handler for assigned signals SIGINT and SIGUSR2
+ * Only those two have this handler attached, but many more have a part in the job
+ * Naming them all: 
+ * SIGINT   - for user interaction
+ * SIGSTOP  - for stopping all processess from the process group
+ * SIGCONT  - for continuing the work
+ * SIGTERM  - for terminating everything
+ * SIGUSR2  - for the mechanism behind sending signals to every child process
+ * It works as simples as this: 
+ * User sends SIGINT by pressing Ctrl+C.
+ * It is firstly IGNored by all processes, except by the parent process.
+ * The SIGUSR2, in other hand, is only IGNored by the parent process, 
+ * having this handler attached to the other processess.
+ * When the parent process receives the SIGINT, it notifies 
+ * all the processess from its pgroup with a SIGUSR2.
+ * So they, except him, receive a SIGUSR2 and send to 
+ * themselves a SIGSTOP, stopping all, except the parent.
+ * The parent, now, waits for the user decision of continuing, 
+ * sending a SIGCONT to all, or terminating, sending a SIGTERM.
+ * @param signo signal received
+*/
+void sigHandler(int signo);
+
+/**
+ * @brief Attaches the @p handler of the signal @p SIG to the current process
+ * @param action struct for attaching the handler and registering it
+ * @param SIG signal to be assigned with the @p handler
+ * @param handler prototyped Handler function to be attached to the signal
+*/
+void attachSIGHandler(struct sigaction action, int SIG, __sighandler_t handler);
+
+/**
  * @brief Check if the size B is valid
  * @param optarg size B to be checked
  * @return OK if B SIZE is valid, ERROR_BSIZE otherwise

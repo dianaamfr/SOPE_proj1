@@ -32,23 +32,10 @@ int main(int argc, char * argv[], char * envp[]){
    blockSIGUSR1();
 
    struct sigaction action;
-   action.sa_handler = sigHandler;
-   sigemptyset(&action.sa_mask);
-   action.sa_flags = 0;
 
-   if (sigaction(SIGUSR2,&action,NULL) < 0){
-      fprintf(stderr,"Unable to install SIGUSR1 handler\n");
-      exit(1);
-   }
+   attachSIGHandler(action, SIGUSR2, sigHandler);
 
-   action.sa_handler = SIG_IGN;
-   sigemptyset(&action.sa_mask);
-   action.sa_flags = 0;
-
-   if (sigaction(SIGINT,&action,NULL) < 0){
-      fprintf(stderr,"Unable to install SIGINT handler\n");
-      exit(1);
-   }
+   attachSIGHandler(action, SIGINT, SIG_IGN);
 
    if (pendingSIGUSR1() == OK){ // If SIGUSR1 is pending, then we are currently in a subdirectory
       
@@ -66,26 +53,14 @@ int main(int argc, char * argv[], char * envp[]){
    }
    else{ // Otherwise, we are in the parent/main directory
 
+      clearLogfile();
+
       logCREATE(argc,argv);
       flags.startTime = start;
 
-      action.sa_handler = sigHandler;
-      sigemptyset(&action.sa_mask);
-      action.sa_flags = 0;
-      
-      if (sigaction(SIGINT,&action,NULL) < 0){
-            fprintf(stderr,"Unable to install SIGINT handler\n");
-            exit(1);
-      }
+      attachSIGHandler(action, SIGUSR2, SIG_IGN);
 
-      action.sa_handler = SIG_IGN;
-      sigemptyset(&action.sa_mask);
-      action.sa_flags = 0;
-      
-      if (sigaction(SIGUSR2,&action,NULL) < 0){
-            fprintf(stderr,"Unable to install SIGINT handler\n");
-            exit(1);
-      }
+      attachSIGHandler(action, SIGINT, sigHandler);
 
       // The args/flags must be checked
       if (checkArgs(argc,argv,&flags) != OK){
