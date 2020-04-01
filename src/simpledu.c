@@ -17,12 +17,9 @@
 #include "logging.h"
 
 int main(int argc, char * argv[], char * envp[]){
-
-   setenv("LOG_FILENAME","simpledu.log",1);
-
+   
    gettimeofday(&start, NULL);
-
-   logCREATE(argc,argv);
+   setenv("LOG_FILENAME","simpledu.log",1);
 
    flagMask flags;
    DIR *dirp;
@@ -39,12 +36,19 @@ int main(int argc, char * argv[], char * envp[]){
       // Read the flags from pipe
       if (read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1)
          error_sys("Error reading pipe\n");
+      
       isSubDir = true;
+
+      start = flags.startTime;
+      logCREATE(argc,argv);
 
       // Save old stdout descriptor 
       oldStdout = atoi(argv[1]);
    }
    else{ // Otherwise, we are in the parent/main directory
+
+      logCREATE(argc,argv);
+      flags.startTime = start;
 
       // The args/flags must be checked
       if (checkArgs(argc,argv,&flags) != OK){

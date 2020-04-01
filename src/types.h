@@ -31,6 +31,7 @@ typedef struct flagMask{
   int  d;                                   /*< -d, --max-depth     -> print the total for a directory (or file, with --all) */
   int  N;                                   /*< N                   -> only if it is N or fewer levels below the command line argument; */
   char path[MAX_PATH];                      /*< pathname */
+  struct timeval startTime;                 /*< starTime            -> init instance of the program */
 } flagMask;
 
 #endif
