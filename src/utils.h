@@ -87,7 +87,7 @@ void error_sys(char *msg);
 
 /**
  * @brief Get file status with lstat() if L flag is inactive or stat() if L flag is active
- * @param L flag
+ * @param flag_L L flag
  * @param stat_buf where the info about the file is returned
  * @param path the path of the file
  * @return OK if no problems occured, ERROR otherwise
@@ -95,46 +95,46 @@ void error_sys(char *msg);
 int getStatus(int flag_L, struct stat * stat_buf, char * path);
 
 /**
- * @brief 
- * @param 
- * @param 
- * @return 
+ * @brief convert the size in system blocks to blocks with Bsize
+ * @param totalSize the size to convert
+ * @param Bsize the size of the blocks
+ * @return size in blocks of Bsize
 */
 double sizeInBlocks(long int totalSize, long int Bsize);
 
 /**
- * @brief Get file status with lstat() if L flag is inactive or stat() if L flag is active
- * @param 
- * @param
- * @param stat_buf where the info about the file is returned
+ * @brief sum the size of one directory (without files/subdirectories)
+ * @param flags_B B flag
+ * @param flags_b b flag
+ * @param stat_buf where the info about the directory is returned
  * @return OK if no problems occured, ERROR otherwise
 */
 int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf);
 
 /**
- * @brief 
- * @param 
- * @param stat_buf where the info about the file is returned
- * @param 
- * @param 
- * @return OK if no problems occured, ERROR otherwise
+ * @brief sum the size of the files in one directory
+ * @param dirp directory stream 
+ * @param stat_buf where the info about the directory is stored
+ * @param flags flagMask with active flags
+ * @param oldStdout the descriptor to be use to print the sizes to the console
+ * @return the size of the subdirectories in the directory pointed by dirp
 */
-long int searchFiles(DIR *dirp, struct stat * stat_buf, flagMask * flags, int oldStdout);
+long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout);
 
 /**
  * @brief 
  * @param 
- * @param stat_buf where the info about the file is returned
- * @param 
- * @param
+ * @param stat_buf where the info about the directory is stored
+ * @param flags flagMask with active flags
+ * @param oldStdout the descriptor to be use to print the sizes to the console
  * @return
 */
-long int searchSubdirs(DIR *dirp,struct stat * stat_buf, flagMask * flags, int stdout);
+long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout);
 
 /**
  * @brief 
  * @param 
- * @param 
+ * @param flags flagMask with active flags
  * @param 
  * @return 
 */

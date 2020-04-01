@@ -259,7 +259,9 @@ long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, in
          size  = ceil((double)size / flags->size);
       }
       else{ // du without options - default
-         size = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
+         size  = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+         sizeBTemp = size;
+         size  = ceil((double)size / 1024);
       }
    }
 
@@ -382,8 +384,7 @@ int getStatus(int flag_L, struct stat * stat_buf, char * path){
 }
 
 int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf){
-   //sum the size of the current directory according to active options
-   if (flags_b){
+   if (flags_b && !flags_B){
       return stat_buf->st_size;
    }
    else if (flags_B && !flags_b) { //-B SIZE
@@ -394,8 +395,9 @@ int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf){
    }
 }
 
-long int searchFiles(DIR *dirp, struct stat * stat_buf, flagMask * flags, int oldStdout){
+long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout){
    struct dirent *direntp;
+   struct stat stat_buf;
    long int size = 0;
 
    //search for regular files and symbolic links in current directory
@@ -411,13 +413,13 @@ long int searchFiles(DIR *dirp, struct stat * stat_buf, flagMask * flags, int ol
       //guarda o path do ficheiro
       sprintf(pathname, "%s/%s", flags->path, direntp->d_name);
 
-      if(getStatus(flags->L,stat_buf,pathname)){
+      if(getStatus(flags->L,&stat_buf,pathname)){
          fprintf(stderr, "Stat error in %s\n", pathname);
          exit(ERROR);
       }
    
-      if (S_ISREG(stat_buf->st_mode) || S_ISLNK(stat_buf->st_mode)){
-         size += dirFileSize(flags,stat_buf,pathname,oldStdout);
+      if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
+         size += dirFileSize(flags,&stat_buf,pathname,oldStdout);
       } 
 
       free(pathname);  
@@ -426,8 +428,9 @@ long int searchFiles(DIR *dirp, struct stat * stat_buf, flagMask * flags, int ol
    return size;
 }
 
-long int searchSubdirs(DIR *dirp,struct stat * stat_buf, flagMask * flags, int stdout){
+long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout){
    struct dirent *direntp;
+   struct stat stat_buf;
    long int totalSize=0;
 
    while ((direntp = readdir(dirp)) != NULL) {
@@ -436,13 +439,13 @@ long int searchSubdirs(DIR *dirp,struct stat * stat_buf, flagMask * flags, int s
       if (pathname == NULL) error_sys("Memory Allocation error\n");
       sprintf(pathname, "%s/%s", flags->path, direntp->d_name); //guarda o path do subdiretorio 
 
-      if(getStatus(flags->L,stat_buf,pathname)){
+      if(getStatus(flags->L,&stat_buf,pathname)){
          fprintf(stderr, "Stat error in %s\n", pathname);
          exit(ERRORARGS);
       }
 
       //processa os subdiretorios
-      if (S_ISDIR(stat_buf->st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
+      if (S_ISDIR(stat_buf.st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
          totalSize += processSubdir(stdout,flags,pathname);
       }
 

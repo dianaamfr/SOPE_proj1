@@ -25,43 +25,33 @@ int main(int argc, char* argv[], char* envp[]){
    
    blockSIGUSR1();
 
-   if(checkArgs(argc,argv,&flags) != OK){
-      fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
-      exit(ERRORARGS);
+   //if USR1 signal is pending we are reading a subdirectory
+   if(pendingSIGUSR1() == OK){
+      //read Pipe with flags
+      if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1)
+         error_sys("Error reading pipe\n");
+      isSubDir = true;
+
+      // save stdout descriptor 
+      oldStdout = atoi(argv[1]);
    }
-   
-   //se o path não for válido então:
-   // 1) O argumento é o descritor do stdout -> processo vai ler subdiretorio e precisa de ler as flags do pipe
-   // 2) O path é inválido
-   if(validatePath(flags.path) != OK){
-      // 1) Se há algum sigusr1 pendente então deve ler-se as flags do pipe
-       if(pendingSIGUSR1() == OK){
-          //read Pipe
-         if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){ 
-            fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
-            exit(ERRORARGS);
-         }
-      } 
-      // 2) Não há sigusr1 pendentes logo o path é inválid
-      else{
-         fprintf(stderr,"Invalid path: %s\n",flags.path);
-         exit(ERRORARGS);
-      }
-      
-      if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1){ 
+   //otherwise this is the parent (main directory)
+   else{
+      // the arguments(flags) should be checked
+      if(checkArgs(argc,argv,&flags) != OK){
          fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
          exit(ERRORARGS);
       }
 
-      isSubDir = true;
+      if(validatePath(flags.path) != OK){
+         fprintf(stderr,"Invalid path: %s\n",flags.path);
+         exit(ERRORARGS);
+      }
 
-      //se for um subdiretorio é necessário utilizar o descritor do stdout passado nos argumentos
-      oldStdout = atoi(argv[1]);
-      // Converter o descritor antigo do STDOUT em string para passar como parâmetro no exec
-   } 
-
-   else{
+      //the stdout descriptor should be saved to be sent to the child processes
       oldStdout = dup(STDOUT_FILENO);
+
+      //print flags for testing purposee
       printFlags(&flags,"Running"); 
    }
 
@@ -80,13 +70,13 @@ int main(int argc, char* argv[], char* envp[]){
          fprintf(stderr, "Could not open directory %s\n", flags.path);
 
       //add subdirectories size
-      totalSize += searchSubdirs(dirp, &stat_buf, &flags, oldStdout);
+      totalSize += searchSubdirs(dirp, &flags, oldStdout);
 
       //get back to the beginning of the directory
       rewinddir(dirp);
 
       //add size of regular files and symbolic links
-      totalSize += searchFiles(dirp, &stat_buf, &flags, oldStdout);
+      totalSize += searchFiles(dirp, &flags, oldStdout);
 
       closedir(dirp);
 
@@ -97,6 +87,7 @@ int main(int argc, char* argv[], char* envp[]){
       //Calculare final size based on B flag
       if(flags.B)
          totalSize = sizeInBlocks(totalSize,flags.size);
+   
    }
 
    else if (S_ISREG(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
