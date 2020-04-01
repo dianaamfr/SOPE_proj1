@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <signal.h>
 
-int main(int argc, char* argv[], char* envp[]){
+int main(int argc, char * argv[], char * envp[]){
 
    flagMask flags;
    DIR *dirp;
@@ -26,10 +26,10 @@ int main(int argc, char* argv[], char* envp[]){
    
    blockSIGUSR1();
 
-   if(pendingSIGUSR1() == OK){ // If SIGUSR1 is pending, then we are currently in a subdirectory
+   if (pendingSIGUSR1() == OK){ // If SIGUSR1 is pending, then we are currently in a subdirectory
       
       // Read the flags from pipe
-      if(read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1)
+      if (read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1)
          error_sys("Error reading pipe\n");
       isSubDir = true;
 
@@ -39,12 +39,12 @@ int main(int argc, char* argv[], char* envp[]){
    else{ // Otherwise, we are in the parent/main directory
 
       // The args/flags must be checked
-      if(checkArgs(argc,argv,&flags) != OK){
+      if (checkArgs(argc,argv,&flags) != OK){
          fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
          exit(ERRORARGS);
       }
 
-      if(validatePath(flags.path) != OK){
+      if (validatePath(flags.path) != OK){
          fprintf(stderr,"Invalid path: %s\n",flags.path);
          exit(ERRORARGS);
       }
@@ -55,52 +55,61 @@ int main(int argc, char* argv[], char* envp[]){
       printFlags(&flags,"Running"); 
    }
 
-   if(getStatus(flags.L,&stat_buf,flags.path)){
+   if (getStatus(flags.L,&stat_buf,flags.path)){
       fprintf(stderr, "Stat error in %s\n", flags.path);
       exit(ERRORARGS);
    }
 
-   //if the user asks for the size of a directory
+   // If the user asks for the size of a directory
    if (S_ISDIR(stat_buf.st_mode)) {
 
       totalSize += currentDirSize(flags.B,flags.b,&stat_buf);
 
-      //try to open the directory
+      // Opening the directory
       if ((dirp = opendir(flags.path)) == NULL) 
          fprintf(stderr, "Could not open directory %s\n", flags.path);
 
-      //add subdirectories size
+      // Adding subdirectories size
       totalSize += searchSubdirs(dirp, &flags, oldStdout);
 
-      //get back to the beginning of the directory
+      // Returning to the beggining of the current directory
       rewinddir(dirp);
 
-      //add size of regular files and symbolic links
+      // Adding the size of Regular Files and Symbolic Links
       totalSize += searchFiles(dirp, &flags, oldStdout);
 
       closedir(dirp);
 
-      //write subDir Size
-      if(isSubDir)
+      // Writing subdirectory size to the pipe previously assigned
+      if (isSubDir)
          write(STDOUT_FILENO,&totalSize,sizeof(long int));
       
-      //Calculare final size based on B flag
-      if(flags.B)
+      // Calculating the final size based on -B flag
+      if (flags.B)
          totalSize = sizeInBlocks(totalSize,flags.size);
-      else if(!flags.B && !flags.b)
+      else if (!flags.B && !flags.b)
          totalSize = sizeInBlocks(totalSize,1024);
    }
 
-   else if (S_ISREG(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
+   else if (S_ISREG(stat_buf.st_mode)){ 
+      // If the size of a regular file is asked
+      // Then it should be returned even 
+      // if the user doesn't specify --all
+
       totalSize = regularFileSize(&flags,&stat_buf);
    }
 
-   else if (S_ISLNK(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
+   else if (S_ISLNK(stat_buf.st_mode)){ 
+      // If the size of a symbolic link is asked, 
+      // Then it should be returned even 
+      // if the user doesn't specify --all
+
       totalSize = symbolicLinkSize(&flags,&stat_buf);
    }
 
-   //print the size of the directory or regular file
-   //for -B size with size > 1 we do the calculation as in -B 1 and compute dirInfo.size in the end by dividing the total by the size specified
+   // Printing the size of the directory or regular file
+   // For -B with size_b > 1, the calculation is done as -B size_b=1
+   // and computed dirInfo.size in the end by dividing the total size by the size_b specified
    
    dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, flags.path);
 

@@ -1,14 +1,8 @@
 /**
- * @file aux.h
- * @author My Self
+ * @file utils.h
+ * @author SOPE Group 
  * @date 20 March 2020
- * @brief File containing simpledu headers and constants
- *
- * Here typically goes a more extensive explanation of what the header
- * defines. Doxygens tags are words preceeded by either a backslash @\
- * or by an at symbol @@.
- * @note Credits to the "Example of Parsing Long Options with getopt_long"
- * @see checkArgs
+ * @brief File containing utilities' headers and constants
  */
 
 #ifndef AUX_H
@@ -22,7 +16,7 @@
  * @brief Print an error message @p msg to stderr
  * @param msg error message to be printed
 */
-void error_sys(char *msg);
+void error_sys(char * msg);
 
 /**
  * @brief Print active flags
@@ -53,7 +47,7 @@ int pendingSIGUSR1();
  * @param optarg size B to be checked
  * @return OK if B SIZE is valid, ERROR_BSIZE otherwise
 */
-long int checkBsize(char *optarg);
+long int checkBsize(char * optarg);
 
 /** 
  * @brief Build flagMask struct (set active/inactive flags and path)
@@ -66,7 +60,7 @@ long int checkBsize(char *optarg);
  * @see https://www.gnu.org/software/libc/manual/html_node/Getopt-Long-Option-Example.html
  * @see https://linux.die.net/man/3/getopt_long for more info on the functions used
  */
-int checkArgs(int argc, char* argv[], flagMask *flags);
+int checkArgs(int argc, char * argv[], flagMask * flags);
 
 /**
  * @brief Check if the @p path exists
@@ -88,77 +82,77 @@ int getStatus(int flag_L, struct stat * stat_buf, char * path);
  * @brief Gets the size of one directory (without counting files/subdirectories)
  * @param flags_B B flag
  * @param flags_b b flag
- * @param stat_buf where resides the info about the directory
+ * @param stat_buf where resides the info about the current directory
  * @return the size of the current directory
 */
 int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf);
 
 /**
- * @brief sum the size of the subdirectories in one directory
+ * @brief Gets the size of the subdirectories in one directory
  * @param dirp directory stream 
- * @param stat_buf where the info about the directory is stored
- * @param flags flagMask with active flags
- * @param oldStdout the descriptor to be use to print the sizes to the console
- * @return
+ * @param stat_buf where resides the info about the current directory
+ * @param flags flagMask with the active flags
+ * @param oldStdout the descriptor to be use for printing the info
+ * @return total size of the current directory
 */
-long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout);
+long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout);
 
 /**
- * @brief Calculate the size occupied in disk by a single regular file
- * Used when the user only asks for the size of a single file
+ * @brief Gets the size of one subdirectory
+ * Creates a child process to execute simpledu 
+ * on the subdirectory being currently searched.
+ * Uses forks, pipes and execs to do it.
+ * @param stdout the old descriptor to be sent to the new process
+ * @param flags flagMask with active flags
+ * @param subDirPath the path of the subdirectory to be processed
+ * @return the size of the subdirectory
+*/
+long int processSubdir(int stdout, flagMask * flags, char * subDirPath);
+
+/**
+ * @brief Gets the size of the files in the current directory
+ * @param dirp directory stream 
+ * @param stat_buf where resides the info about the current directory
+ * @param flags flagMask with active flags
+ * @param oldStdout the descriptor to be use for printing the info
+ * @return the size of the files present in the current directory
+*/
+long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout);
+
+/**
+ * @brief Calculates the size of a directory file and prints it if --all is specified
  * @param flags flagMask with active flags
  * @param stat_buf with info about block size and file size in bytes
- * @return the size occupied by the file
+ * @param pathname the path of the file
+ * @param stdout_fd the descriptor to be use for printing the info
+ * @return the size of the file
 */
-long int regularFileSize(flagMask *flags, struct stat *stat_buf);
+long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, int stdout_fd);
 
 /**
- * @brief Calculate the size occupied in disk by a single symbolic link
- * Used when the user only asks for the size of a single symbolic link
- * @param flags flagMask with active flags
- * @param stat_buf with info about block size and file size in bytes
- * @return the size occupied by the file
-*/
-long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf);
-
-/**
- * @brief Calculate the size of a directory file and show it on the screen if --all is specified
- * Used to process each file of a directory and return its size
- * @param flags flagMask with active flags
- * @param stat_buf with info about block size and file size in bytes
- * @param pathname the name of the path of the file
- * @param stdout_fd the file descriptor to use when writing to the console
- * @return the size occupied by the file
-*/
-long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, int stdout_fd);
-
-/**
- * @brief convert the size in system blocks to blocks with Bsize
- * @param totalSize the size to convert
+ * @brief Converts the size in system blocks to blocks with size_b
+ * @param totalSize the size to be converted
  * @param Bsize the size of the blocks
- * @return size in blocks of Bsize
+ * @return size in blocks of size_b
 */
 double sizeInBlocks(long int totalSize, long int Bsize);
 
 /**
- * @brief sum the size of the files in one directory
- * @param dirp directory stream 
- * @param stat_buf where the info about the directory is stored
+ * @brief Calculates the size of a single regular file
+ * Used when the user only asks for the size of a single file
  * @param flags flagMask with active flags
- * @param oldStdout the descriptor to be use to print the sizes to the console
- * @return the size of the subdirectories in the directory pointed by dirp
+ * @param stat_buf with info about block size and file size in bytes
+ * @return the size of the file
 */
-long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout);
+long int regularFileSize(flagMask * flags, struct stat * stat_buf);
 
 /**
- * @brief get the size of one subdirectory
- * Uses fork() to create a new process, exec() to execute the simpledu for that process and pipe() to create
- * 2 pipes, one to send the flags to the subdirectory process and other to receive the size of the subdirectory
- * @param stdout the descriptor to be sent to the new process
+ * @brief Calculates the size of a single symbolic link
+ * Used when the user only asks for the size of a single symbolic link
  * @param flags flagMask with active flags
- * @param subDirPath the path of the subdirectory to process
- * @return the size of the subdirectory
+ * @param stat_buf with info about block size and file size in bytes
+ * @return the size of the symbolic link
 */
-long int processSubdir(int stdout, flagMask * flags, char * subDirPath);
+long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf);
 
 #endif

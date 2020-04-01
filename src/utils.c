@@ -116,7 +116,7 @@ long int checkBsize(char * optarg) {
    return OK;
 }
 
-int checkArgs(int argc, char* argv[], flagMask *flags){
+int checkArgs(int argc, char * argv[], flagMask * flags){
    
    int c;
    int option_index = 0;
@@ -305,8 +305,8 @@ int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf){
    }
 }
 
-long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout){
-   
+long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
+
    struct dirent *direntp;
    struct stat stat_buf;
    long int totalSize=0;
@@ -314,17 +314,25 @@ long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout){
    while ((direntp = readdir(dirp)) != NULL) {
 
       char * pathname = malloc(strlen(flags->path) + 1 + strlen(direntp->d_name) + 1);
-      if (pathname == NULL) error_sys("Memory Allocation error\n");
-      sprintf(pathname, "%s/%s", flags->path, direntp->d_name); //guarda o path do subdiretorio 
+      
+      if (pathname == NULL) 
+         error_sys("Memory Allocation error\n");
 
-      if(getStatus(flags->L,&stat_buf,pathname)){
+      sprintf(pathname, "%s/%s", flags->path, direntp->d_name); // Saves subdirectory path
+
+      if(getStatus(flags->L, &stat_buf, pathname) != OK){
+
          fprintf(stderr, "Stat error in %s\n", pathname);
          exit(ERRORARGS);
       }
 
-      //processa os subdiretorios
-      if (S_ISDIR(stat_buf.st_mode) && strcmp(direntp->d_name, ".") != 0 && strcmp(direntp->d_name, "..") != 0){
-         totalSize += processSubdir(stdout,flags,pathname);
+      int isDot = strcmp(direntp->d_name, ".") != 0;
+      int isDoubleDot = strcmp(direntp->d_name, "..") != 0;
+
+      // Starts processing the subdirectory
+      if (S_ISDIR(stat_buf.st_mode) && isDot && isDoubleDot){
+
+         totalSize += processSubdir(stdout, flags, pathname);
       }
 
       free(pathname);
@@ -333,150 +341,83 @@ long int searchSubdirs(DIR *dirp, flagMask * flags, int stdout){
    return totalSize;
 }
 
-long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, int stdout_fd){
-   
-   long int sizeBTemp = 0, size = 0;
+long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
 
-   if (S_ISREG(stat_buf->st_mode)){//if it is a regular file
-      //calculate the space in disk of the regular file according to the active options
-      // -b || -B 1 -b || -b -B 1  => -b
-      if (flags->b && !flags->B){
-         size = stat_buf->st_size;
-      }
-      else if(flags->B && !flags->b){
-         size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
-         sizeBTemp = size;
-         size  = sizeInBlocks(size,flags->size);
-      }
-      else if(flags->B && flags->b){
-         size  = stat_buf->st_size;
-         sizeBTemp = size;
-         size  = sizeInBlocks(size,flags->size);
-      }
-      else{ // du without options - default
-         size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
-         sizeBTemp = size;
-         size  = sizeInBlocks(size,1024);
-      }
-   }
+   int fd1[2], fd2[2];
+   long int subDirSize;
+   pid_t pid; 
 
-   else if(S_ISLNK(stat_buf->st_mode)){
-      if(flags->b && !flags->B){// -b || -B 1 -b || -b -B 1  => -b
-         size = stat_buf->st_size; //count size of the link itself in bytes
-      }
-      else{ 
-         if(!flags->L){
-            if(flags->B && flags->b){
-               size  = stat_buf->st_size;
-               sizeBTemp = size;
-               size  = ceil((double)size / flags->size);
-            }
-            else size = 0;
-         }
-         else{ //dereference symbolic links
-            if (flags->B && !flags->b){
-               size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
-               sizeBTemp = size;
-               size  = ceil((double)size / flags->size);
-            }
-            else if(flags->B && flags->b){
-               size  = stat_buf->st_size;
-               sizeBTemp = size;
-               size  = ceil((double)size / flags->size);
-            }
-            else{//du without options - default
-               size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
-               sizeBTemp = size;
-               size  = sizeInBlocks(size,1024);
-            }
-         }
-         
-      }
-   }
+   // Creating the needed pipes
+   if (pipe(fd1) < 0 || pipe(fd2) < 0)
+      error_sys("Pipe error!\n");
 
-   //print all regular files if --all (-a) is active
-   if(flags->a)
-      dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
-   
-   //for -B option we want to show one size on screen but pass another to the total size calculation
-   if(flags->B || (!flags->B && !flags->b)) 
-      size = sizeBTemp;
-
-   return size;
-}
-
-double sizeInBlocks(long int totalSize, long int Bsize){
-   return ceil((double)totalSize / Bsize);
-}
-
-long int regularFileSize(flagMask *flags, struct stat *stat_buf){
-   
-   long int totalSize=0;
-
-   // -b || -B 1 -b || -b -B 1  => -b
-   if (flags->b && !flags->B){
-      return stat_buf->st_size;
-   }
-   else if (flags->B && !flags->b){
-      totalSize = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
-      return sizeInBlocks(totalSize,flags->size);
-   }
-   else if(flags->B && flags->b){ // -b -B SIZE with SIZE > 1
-      return sizeInBlocks(stat_buf->st_size,flags->size);
-   }
-   else{//du without options - default
-      totalSize = stat_buf->st_blksize * ceil((double)stat_buf->st_size/stat_buf->st_blksize);
-      return sizeInBlocks(totalSize,1024);
-   }
-}
-
-long int symbolicLinkSize(flagMask *flags, struct stat *stat_buf){
-
-   long int totalSize=0;
-   
-   if (flags->b && !flags->B){ // -b || -B 1 -b || -b -B 1  => -b
-      return stat_buf->st_size; //count size of the link itself in bytes
-   }
-   else{ 
-      if(!flags->L){
-            if(flags->B && flags->b){
-               return sizeInBlocks(stat_buf->st_size,flags->size);
-            }
-            return 0;
-      }
-      else{ //dereference symbolic links
-         if (flags->B && !flags->b){
-            totalSize = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
-         return sizeInBlocks(totalSize,flags->size);
-         }
-         else if(flags->B && flags->b){
-            return sizeInBlocks(stat_buf->st_size,flags->size);
-         }
-         else{//du without options - default
-            totalSize = stat_buf->st_blksize * ceil((double)stat_buf->st_size/stat_buf->st_blksize);
-            return sizeInBlocks(totalSize,1024);
-         }
-      }
+   // Creating the child process
+   if ((pid = fork()) < 0) 
+      error_sys("Fork error!\n");
       
+   if (pid > 0){ //PARENT
+      close(fd1[READ]);    // pipe1 (parent -> child) - parent process writes the flags on the pipe1 (do not read)
+      close(fd2[WRITE]);   // pipe2 (child -> parent) - parent process reads the child subdirectory size (do not write)
+
+      // Saving the current path for later use and replacing it by the path of the subdirectory
+      char tempPath[MAX_PATH];
+      strcpy(tempPath,flags->path);
+      memset(flags->path,'\0',MAX_PATH);
+      strcpy(flags->path, subDirPath);
+
+      write(fd1[WRITE],flags,sizeof(flagMask)); // Writing flags to pipe1
+      close(fd1[WRITE]);
+
+      // Recovering original path
+      memset(flags->path,'\0',MAX_PATH);
+      strcpy(flags->path,tempPath);
+
+      read(fd2[READ],&subDirSize,sizeof(long int)); // Reading subdirectory size from pipe2
+      close(fd2[READ]);
    }
+   else{ //CHILD
+      close(fd1[WRITE]);   // pipe1 (parent -> child) - child process reads the flags from pipe1 (do not write)
+      close(fd2[READ]);    // pipe2 (child -> parent) - child process writes the subdirectory size to pipe2 (do not write)
+
+      dup2(fd1[READ],STDIN_FILENO); // Performing dup for later reading from pipe1
+
+      dup2(fd2[WRITE],STDOUT_FILENO); // Performing dup for later writing to pipe2
+      
+      kill(pid,SIGUSR1); // Identifying this as a child process 
+
+      char stdoutStr[10];
+
+      // Converting old stdout descriptor to string to be passed as an argument
+      sprintf(stdoutStr , "%d", stdout);
+
+      // Finally, executing it all again; Now for another subdirectory
+      execl("simpledu", "simpledu", stdoutStr, NULL);
+
+      error_sys("Exec error!\n");
+   } 
+
+   // The total subdirectory size to be passed to the parent directory
+   return subDirSize;
 }
 
-long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout){
+long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
+
    struct dirent *direntp;
    struct stat stat_buf;
    long int size = 0;
 
-   //search for regular files and symbolic links in current directory
-   //TODO: separar em função auxiliar
+   // Searching for regular files and symbolic links in the current directory
+   // TODO: separar em função auxiliar
    while ((direntp = readdir(dirp)) != NULL) {
-      char *pathname; //para guardar o path de cada ficheiro ou subdiretório
+      
+      char *pathname;
 
       pathname = malloc(strlen(flags->path) + 1 + strlen(direntp->d_name) + 1);
 
       if (pathname == NULL) 
          error_sys("Memory Allocation error\n");
    
-      //guarda o path do ficheiro
+      // Saves the path of the file found
       sprintf(pathname, "%s/%s", flags->path, direntp->d_name);
 
       if(getStatus(flags->L,&stat_buf,pathname)){
@@ -494,60 +435,145 @@ long int searchFiles(DIR *dirp, flagMask * flags, int oldStdout){
    return size;
 }
 
-long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
+long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, int stdout_fd){
+   
+   long int sizeBTemp = 0, size = 0;
 
-   int fd1[2], fd2[2];
-   long int subDirSize;
-   pid_t pid; 
+   if (S_ISREG(stat_buf->st_mode)){ // If it is a regular file
 
-   //cria os pipes 
-   if (pipe(fd1) < 0 || pipe(fd2) < 0)
-      error_sys("Pipe error!\n");
-
-
-   //criar processo filho e verifica erro do fork
-   if ((pid = fork()) < 0) 
-      error_sys("Fork error!\n");
+      // Calculating its size according to the flags:
+      // -b || -B 1 -b || -b -B 1 -> all these situations are equal to -b
       
-   if(pid > 0){ //PARENT
-      close(fd1[READ]); // Pipe 1 (pai -> filho) o processo pai vai escrever as flags no Pipe 1 (logo não lê do Pipe 1)
-      close(fd2[WRITE]); // Pipe 2 (filho -> pai) o pai lê o tamanho ocupado pelo filho (subdiretorio) e por isso não escreve no Pipe 2
-
-      //save flags current path and replace it by the path of the subdirectory
-      char tempPath[MAX_PATH];
-      strcpy(tempPath,flags->path);
-      memset(flags->path,'\0',MAX_PATH);
-      strcpy(flags->path, subDirPath);
-
-      write(fd1[WRITE],flags,sizeof(flagMask)); // Pipe 1 (pai -> filho) o processo pai escreve as flags no Pipe 1
-      close(fd1[WRITE]);
-
-      //recover original path
-      memset(flags->path,'\0',MAX_PATH);
-      strcpy(flags->path,tempPath);
-
-      read(fd2[READ],&subDirSize,sizeof(long int)); // Pipe 2 (filho -> pai) o pai lê o tamanho ocupado pelo filho (subdiretorio)
-      close(fd2[READ]);
+      if (flags->b && !flags->B){
+         size = stat_buf->st_size;
+      }
+      else if (flags->B && !flags->b){
+         size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+         sizeBTemp = size;
+         size  = sizeInBlocks(size,flags->size);
+      }
+      else if (flags->B && flags->b){
+         size  = stat_buf->st_size;
+         sizeBTemp = size;
+         size  = sizeInBlocks(size,flags->size);
+      }
+      else{ // simpledu without options = default
+         size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+         sizeBTemp = size;
+         size  = sizeInBlocks(size,1024);
+      }
    }
 
-   else{ //CHILD
-      close(fd1[WRITE]); // Pipe 1 (pai -> filho) o processo filho vai ler as flags no Pipe 1 (logo não escreve no Pipe 1)
-      close(fd2[READ]); // Pipe 2 (filho -> pai) o filho escreve o seu tamanho no Pipe 2 e por isso não lê desse pipe
+   else if (S_ISLNK(stat_buf->st_mode)){ // If it is a symbolic link
 
-      dup2(fd1[READ],STDIN_FILENO); // Quando o filho ler (read) do STDIN vai na verdade ler do Pipe 1 (onde tem as flags)
+      // Calculating its size according to the flags:
+      // -b || -B 1 -b || -b -B 1 -> all these situations are equal to -b
 
-      dup2(fd2[WRITE],STDOUT_FILENO); // Quando o filho escrever (write) no STDOUT vai na verdade escrever no Pipe 2
-      kill(pid,SIGUSR1);
+      if(flags->b && !flags->B){
+         size = stat_buf->st_size; // Counting the size of the link itself in bytes
+      }
+      else{ 
+         if(!flags->L){
+            if(flags->B && flags->b){
+               size  = stat_buf->st_size;
+               sizeBTemp = size;
+               size  = ceil((double)size / flags->size);
+            }
+            else 
+               size = 0;
+         }
+         else{ // Dereferencing symbolic links
 
-      char stdoutStr[10];
+            if (flags->B && !flags->b){
+               size  = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size, stat_buf->st_blksize);
+               sizeBTemp = size;
+               size  = ceil( (double) size / flags->size);
+            }
+            else if (flags->B && flags->b){
+               size  = stat_buf->st_size;
+               sizeBTemp = size;
+               size  = ceil( (double) size / flags->size);
+            }
+            else{ // simpledu without options = default
+               size  = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+               sizeBTemp = size;
+               size  = sizeInBlocks(size,1024);
+            }
+         }
+      }
+   }
 
-      //convert file descriptor to string to pass as an argument
-      sprintf(stdoutStr , "%d", stdout);
+   // Printing all regular files if --all (-a) is active
+   if(flags->a)
+      dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
+   
+   // For -B option, we want to show one size, but pass another to the total size calculation
+   if(flags->B || (!flags->B && !flags->b)) 
+      size = sizeBTemp;
 
-      execl("simpledu", "simpledu", stdoutStr, NULL);
-      error_sys("Exec error!\n");
-   } 
+   return size;
+}
 
-   // acrecenta-se ao tamanho total do diretorio atual o tamanho do seu subdiretorio
-   return subDirSize;
+double sizeInBlocks(long int totalSize, long int Bsize){
+   return ceil( (double) totalSize / Bsize);
+}
+
+long int regularFileSize(flagMask * flags, struct stat * stat_buf){
+   
+   long int totalSize=0;
+
+   // Calculating its size according to the flags:
+   // -b || -B 1 -b || -b -B 1 -> all these situations are equal to -b
+
+   if (flags->b && !flags->B){
+      return stat_buf->st_size;
+   }
+   else if (flags->B && !flags->b){
+      totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
+
+      return sizeInBlocks(totalSize,flags->size);
+   }
+   else if (flags->B && flags->b){ // size_b > 1
+      return sizeInBlocks(stat_buf->st_size,flags->size);
+   }
+   else{ // simpledu without options = default
+      totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
+
+      return sizeInBlocks(totalSize,1024);
+   }
+}
+
+long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf){
+
+   long int totalSize=0;
+   
+   // Calculating its size according to the flags:
+   // -b || -B 1 -b || -b -B 1 -> all these situations are equal to -b
+
+   if (flags->b && !flags->B){ 
+      return stat_buf->st_size; // Counting the size of the link itself in bytes
+   }
+   else{ 
+      if(!flags->L){
+         if(flags->B && flags->b){
+            return sizeInBlocks(stat_buf->st_size,flags->size);
+         }
+         return 0;
+      }
+      else{ // Dereferencing symbolic links
+         if (flags->B && !flags->b){
+            totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
+
+         return sizeInBlocks(totalSize,flags->size);
+         }
+         else if(flags->B && flags->b){
+            return sizeInBlocks(stat_buf->st_size, flags->size);
+         }
+         else{ // simpledu without options = default
+            totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
+
+            return sizeInBlocks(totalSize,1024);
+         }
+      }
+   }
 }
