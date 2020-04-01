@@ -42,7 +42,7 @@ int logCREATE(int argc, char* args[]){
         for(int i = 0; i < argc; i++){
             strcat(info,args[i]);
             if(i < argc - 1){
-                strcat(info,", ");
+                strcat(info," ");
             }
         }
     else

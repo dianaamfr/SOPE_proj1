@@ -31,6 +31,25 @@ int main(int argc, char * argv[], char * envp[]){
    
    blockSIGUSR1();
 
+   struct sigaction action;
+   action.sa_handler = sigHandler;
+   sigemptyset(&action.sa_mask);
+   action.sa_flags = 0;
+
+   if (sigaction(SIGUSR2,&action,NULL) < 0){
+      fprintf(stderr,"Unable to install SIGUSR1 handler\n");
+      exit(1);
+   }
+
+   action.sa_handler = SIG_IGN;
+   sigemptyset(&action.sa_mask);
+   action.sa_flags = 0;
+
+   if (sigaction(SIGINT,&action,NULL) < 0){
+      fprintf(stderr,"Unable to install SIGINT handler\n");
+      exit(1);
+   }
+
    if (pendingSIGUSR1() == OK){ // If SIGUSR1 is pending, then we are currently in a subdirectory
       
       // Read the flags from pipe
@@ -49,6 +68,24 @@ int main(int argc, char * argv[], char * envp[]){
 
       logCREATE(argc,argv);
       flags.startTime = start;
+
+      action.sa_handler = sigHandler;
+      sigemptyset(&action.sa_mask);
+      action.sa_flags = 0;
+      
+      if (sigaction(SIGINT,&action,NULL) < 0){
+            fprintf(stderr,"Unable to install SIGINT handler\n");
+            exit(1);
+      }
+
+      action.sa_handler = SIG_IGN;
+      sigemptyset(&action.sa_mask);
+      action.sa_flags = 0;
+      
+      if (sigaction(SIGUSR2,&action,NULL) < 0){
+            fprintf(stderr,"Unable to install SIGINT handler\n");
+            exit(1);
+      }
 
       // The args/flags must be checked
       if (checkArgs(argc,argv,&flags) != OK){
