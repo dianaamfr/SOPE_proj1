@@ -249,19 +249,19 @@ long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, in
          size = stat_buf->st_size;
       }
       else if(flags->B && !flags->b){
-         size  = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+         size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
          sizeBTemp = size;
-         size  = ceil((double)size / flags->size);
+         size  = sizeInBlocks(size,flags->size);
       }
       else if(flags->B && flags->b){
          size  = stat_buf->st_size;
          sizeBTemp = size;
-         size  = ceil((double)size / flags->size);
+         size  = sizeInBlocks(size,flags->size);
       }
       else{ // du without options - default
-         size  = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+         size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
          sizeBTemp = size;
-         size  = ceil((double)size / 1024);
+         size  = sizeInBlocks(size,1024);
       }
    }
 
@@ -280,7 +280,7 @@ long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, in
          }
          else{ //dereference symbolic links
             if (flags->B && !flags->b){
-               size  = stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+               size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
                sizeBTemp = size;
                size  = ceil((double)size / flags->size);
             }
@@ -290,7 +290,9 @@ long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, in
                size  = ceil((double)size / flags->size);
             }
             else{//du without options - default
-               size = (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
+               size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+               sizeBTemp = size;
+               size  = sizeInBlocks(size,1024);
             }
          }
          
@@ -302,7 +304,7 @@ long int dirFileSize(flagMask *flags, struct stat *stat_buf, char * pathname, in
       dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
    
    //for -B option we want to show one size on screen but pass another to the total size calculation
-   if(flags->B) 
+   if(flags->B || (!flags->B && !flags->b)) 
       size = sizeBTemp;
 
    return size;
@@ -384,14 +386,11 @@ int getStatus(int flag_L, struct stat * stat_buf, char * path){
 }
 
 int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf){
-   if (flags_b && !flags_B){
+   if (flags_b){
       return stat_buf->st_size;
    }
-   else if (flags_B && !flags_b) { //-B SIZE
+   else { 
       return stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize);
-   }
-   else{// du without options - default
-      return (int)ceil(stat_buf->st_blksize*ceil((double)stat_buf->st_size/stat_buf->st_blksize)/1024);
    }
 }
 

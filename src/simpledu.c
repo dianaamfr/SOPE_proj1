@@ -87,7 +87,8 @@ int main(int argc, char* argv[], char* envp[]){
       //Calculare final size based on B flag
       if(flags.B)
          totalSize = sizeInBlocks(totalSize,flags.size);
-   
+      else if(!flags.B && !flags.b)
+         totalSize = sizeInBlocks(totalSize,1024);
    }
 
    else if (S_ISREG(stat_buf.st_mode)){ //if the size of a regular file is asked, then it should be returned even if the user doesn't specify --all
