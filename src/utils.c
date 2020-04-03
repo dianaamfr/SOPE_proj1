@@ -387,6 +387,11 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
       if (S_ISDIR(stat_buf.st_mode) && isDot && isDoubleDot){
 
          totalSize += processSubdir(stdout, flags, pathname);
+
+         //Cada iteracao é um elemento(subdiretorio) de um determinado diretorio
+         //Para a respetiva iteracao nao se quer que a flag seja influenciada por subdiretorios anteriores
+         if (flags->d)
+            flags->N++;
       }
 
       free(pathname);
@@ -404,6 +409,10 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
    // Creating the needed pipes
    if (pipe(fd1) < 0 || pipe(fd2) < 0)
       error_sys("Pipe error!\n");
+
+   //Ao entrar num subdiretorio decrementa a flag --max-depth 
+   if (flags->d)
+      flags->N--;
 
    // Creating the child process
    if ((pid = fork()) < 0) 
@@ -451,7 +460,11 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
    } 
 
    // The total subdirectory size to be passed to the parent directory
-   return subDirSize;
+   if (!flags->S)
+      return subDirSize;
+
+   else
+      return 0;   
 }
 
 long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
@@ -481,6 +494,10 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
    
       if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
          size += dirFileSize(flags,&stat_buf,pathname,oldStdout);
+
+         //Incrementa-se para voltar ao sub-nível anterior
+         if (flags->d)
+            flags->N++;
       } 
 
       free(pathname);  
@@ -492,6 +509,10 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
 long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, int stdout_fd){
    
    long int sizeBTemp = 0, size = 0;
+
+   //Ao entrar num ficheiro decrementa a flag --max-depth 
+   if (flags->d)
+      flags->N--;
 
    if (S_ISREG(stat_buf->st_mode)){ // If it is a regular file
 
@@ -558,8 +579,12 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
    }
 
    // Printing all regular files if --all (-a) is active
-   if(flags->a)
+   if(flags->a && flags->d && (flags->N >= 0))
       dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
+
+   else if (!flags->d && flags->a)
+      dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
+
    
    // For -B option, we want to show one size, but pass another to the total size calculation
    if(flags->B || (!flags->B && !flags->b)) 

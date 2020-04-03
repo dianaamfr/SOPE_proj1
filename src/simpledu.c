@@ -134,8 +134,12 @@ int main(int argc, char * argv[], char * envp[]){
    // Printing the size of the directory or regular file
    // For -B with size_b > 1, the calculation is done as -B size_b=1
    // and computed dirInfo.size in the end by dividing the total size by the size_b specified
+
+   if (flags.d && flags.N >= 0)
+      dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, flags.path);
    
-   dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, flags.path);
+   else if (!flags.d)
+      dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, flags.path);
 
    exit(OK);
 }
