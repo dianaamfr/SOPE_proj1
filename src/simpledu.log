@@ -1,3 +1,38 @@
-      0.24 - 00033912 -      CREATE - ./simpledu --all
-      6.90 - 00033913 -      CREATE - simpledu 3
-      8.98 - 00033914 -      CREATE - simpledu 3
+      2.07 - 00004413 -      CREATE - ./simpledu -a -b
+      6.52 - 00004413 -   SEND_PIPE - 1110_0_0000_./.vscode_1585917126617.966064
+     11.35 - 00004414 -      CREATE - simpledu 3
+     12.11 - 00004414 -   RECV_PIPE - 1110_0_0000_./.vscode_1585917126617.966064
+     17.43 - 00004414 -       ENTRY - 36 at ./.vscode/settings.json
+     18.24 - 00004414 -   SEND_PIPE - totalSize = 36
+     18.55 - 00004413 -   RECV_PIPE - subDirSize = 36
+     18.98 - 00004414 -       ENTRY - 36 at ./.vscode
+     19.51 - 00004414 -        EXIT - 0
+     21.99 - 00004413 -   SEND_PIPE - 1110_0_0000_./tests_1585917126617.966064
+     25.30 - 00004415 -      CREATE - simpledu 3
+     26.03 - 00004415 -   RECV_PIPE - 1110_0_0000_./tests_1585917126617.966064
+     41.33 - 00004415 -       ENTRY - 4847 at ./tests/multiplePathsCode.c
+     43.35 - 00004415 -       ENTRY - 6590 at ./tests/searchDir.c
+     44.51 - 00004415 -       ENTRY - 491 at ./tests/searchDir.h
+     45.34 - 00004415 -       ENTRY - 5334 at ./tests/testingArgs.c
+     46.13 - 00004415 -       ENTRY - 1504 at ./tests/testingLogs.c
+     48.68 - 00004415 -       ENTRY - 3263 at ./tests/testingSignals.c
+     51.12 - 00004415 -       ENTRY - 1503 at ./tests/testingStatInfo.c
+     52.39 - 00004415 -       ENTRY - 5190 at ./tests/testingStatInfoRecursive.c
+     53.52 - 00004415 -   SEND_PIPE - totalSize = 32818
+     54.36 - 00004413 -   RECV_PIPE - subDirSize = 32818
+     54.44 - 00004415 -       ENTRY - 32818 at ./tests
+     55.17 - 00004415 -        EXIT - 0
+     57.19 - 00004413 -       ENTRY - 2364 at ./logging.c
+     57.88 - 00004413 -       ENTRY - 1849 at ./logging.h
+     58.87 - 00004413 -       ENTRY - 322 at ./Makefile
+     59.71 - 00004413 -       ENTRY - 621 at ./notes.md
+     60.41 - 00004413 -       ENTRY - 37272 at ./simpledu
+     61.37 - 00004413 -       ENTRY - 4184 at ./simpledu.c
+     62.21 - 00004413 -       ENTRY - 453 at ./simpledu.h
+     65.10 - 00004413 -       ENTRY - 1918 at ./simpledu.log
+     70.47 - 00004413 -       ENTRY - 1653 at ./types.h
+     71.61 - 00004413 -       ENTRY - 18948 at ./utils.c
+     72.48 - 00004413 -       ENTRY - 6917 at ./utils.h
+     73.85 - 00004413 -   SEND_PIPE - totalSize = 113451
+     74.71 - 00004413 -       ENTRY - 113451 at .
+     75.36 - 00004413 -        EXIT - 0

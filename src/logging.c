@@ -82,7 +82,7 @@ int logRECV_PIPE(char * msg){
 
     char info[200] = "";
     
-    sprintf(info,"\' %s \'",msg);       
+    sprintf(info,"%s",msg);       
 
     return appendLogInfo(RECV_PIPE,msg);
 }
@@ -91,16 +91,16 @@ int logSEND_PIPE(char * msg){
 
     char info[200] = "";
     
-    sprintf(info,"\' %s \'",msg);  
+    sprintf(info,"%s",msg);  
 
     return appendLogInfo(SEND_PIPE, msg);
 }
 
-int logENTRY(int bytes, char * path){
+int logENTRY(long int bytes, char * path){
 
     char info[200] = "";
     
-    sprintf(info,"%d at %s", bytes, path);
+    sprintf(info,"%ld at %s", bytes, path);
 
     return appendLogInfo(ENTRY, info);
 }
