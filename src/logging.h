@@ -69,7 +69,7 @@ int logSEND_PIPE(char * msg);
  * @param path current file/path
  * @return OK if successful, ERROR if not
 */
-int logENTRY(int bytes, char * path);
+int logENTRY(long int bytes, char * path);
 
 /**
  * @brief Clears content of log file at (path) LOG_FILENAME env variable

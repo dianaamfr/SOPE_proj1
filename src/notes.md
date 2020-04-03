@@ -23,3 +23,5 @@ Check output format when: simpledu ./
 Check all includes if needed
 
 Check for untraceable printfs
+
+ERROR and ERRORARGS same thing ... could be only one

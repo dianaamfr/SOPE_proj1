@@ -47,6 +47,10 @@ int main(int argc, char * argv[], char * envp[]){
 
       start = flags.startTime;
       logCREATE(argc,argv);
+      
+      char msg[sizeof(flagMask)];
+      flagsToString(&flags,msg);
+      logRECV_PIPE(msg);
 
       // Save old stdout descriptor 
       oldStdout = atoi(argv[1]);
@@ -65,22 +69,25 @@ int main(int argc, char * argv[], char * envp[]){
       // The args/flags must be checked
       if (checkArgs(argc,argv,&flags) != OK){
          fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
+         logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }
 
       if (validatePath(flags.path) != OK){
          fprintf(stderr,"Invalid path: %s\n",flags.path);
+         logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }
 
       // The old stdout descriptor should be saved to be sent to the child processes
       oldStdout = dup(STDOUT_FILENO);
 
-      printFlags(&flags,"Running"); 
+      // printFlags(&flags,"Running"); 
    }
 
    if (getStatus(flags.L,&stat_buf,flags.path)){
       fprintf(stderr, "Stat error in %s\n", flags.path);
+      logEXIT(ERRORARGS);
       exit(ERRORARGS);
    }
 
@@ -108,6 +115,10 @@ int main(int argc, char * argv[], char * envp[]){
       if (isSubDir)
          write(STDOUT_FILENO,&totalSize,sizeof(long int));
       
+      char msg[16];
+      sprintf(msg, "totalSize = %ld", totalSize);
+      logSEND_PIPE(msg);
+
       // Calculating the final size based on -B flag
       if (flags.B)
          totalSize = sizeInBlocks(totalSize,flags.size);
@@ -140,6 +151,8 @@ int main(int argc, char * argv[], char * envp[]){
    
    else if (!flags.d)
       dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, flags.path);
+   logENTRY(totalSize,flags.path);
 
+   logEXIT(OK);
    exit(OK);
 }
