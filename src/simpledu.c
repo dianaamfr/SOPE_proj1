@@ -94,7 +94,7 @@ int main(int argc, char * argv[], char * envp[]){
    // If the user asks for the size of a directory
    if (S_ISDIR(stat_buf.st_mode)) {
 
-      totalSize += currentDirSize(flags.B,flags.b,&stat_buf);
+      totalSize += currentDirSize(flags.b,&stat_buf);
 
       // Opening the directory
       if ((dirp = opendir(flags.path)) == NULL) 
