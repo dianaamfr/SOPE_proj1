@@ -20,6 +20,7 @@ void error_sys(char *msg){
 
    fprintf(stderr,"%s\n",msg);
 
+   logEXIT(ERROR);
    exit(ERROR);
 } 
 
@@ -53,6 +54,24 @@ void printFlags(flagMask * flags, char * description){
    printf("###########################\n");
 }
 
+void flagsToString(flagMask * flags, char * str){
+   
+   double time = flags->startTime.tv_sec * 1000.0 + flags->startTime.tv_usec / 1000.0;
+   
+   sprintf(str,"%d%d%d%d_%ld_%d%d%d%d_%s_%f",
+   flags->l,
+   flags->a,
+   flags->b,
+   flags->B,
+   flags->size,
+   flags->L,
+   flags->S,
+   flags->d,
+   flags->N,
+   flags->path,
+   time);
+}
+
 void blockSIGUSR1(){
 
    sigset_t mask;
@@ -70,8 +89,10 @@ int pendingSIGUSR1(){
    sigset_t pending_signals;
 
    // Checking for pending SIGUSR1
-   if (sigpending(&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1))
+   if (sigpending(&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1)){
+      // logRECV_SIGNAL(SIGUSR1);
       return OK;
+   }
 
    return ERROR;
 }
@@ -104,7 +125,7 @@ void sigHandler(int signo){
          printf("TERMINATING! - %d - %d\n", getpid(), getppid());
          
          logSEND_SIGNAL(SIGTERM, -getpgrp());
-         logEXIT(0);
+         logEXIT(SIGTERM);
          kill(-getpgrp(), SIGTERM); // Sending a SIGTERM to all processess, including the parent himself
       }
    }
@@ -125,7 +146,8 @@ void attachSIGHandler(struct sigaction action, int SIG, __sighandler_t handler){
 
    if (sigaction(SIG, &action, NULL) < 0){
       fprintf(stderr,"Unable to install SIG handler\n");
-      exit(1);
+      logEXIT(ERROR);
+      exit(ERROR);
    }
 }
 
@@ -180,7 +202,7 @@ int checkArgs(int argc, char * argv[], flagMask * flags){
    tempFlags.l = 1;
 
    /* DEBUGGING ...*/
-   printFlags(&tempFlags, "TESTING");
+   // printFlags(&tempFlags, "TESTING");
    /*...*/
    
    while(1) {         
@@ -377,6 +399,7 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
       if(getStatus(flags->L, &stat_buf, pathname) != OK){
 
          fprintf(stderr, "Stat error in %s\n", pathname);
+         logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }
 
@@ -422,12 +445,20 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
       write(fd1[WRITE],flags,sizeof(flagMask)); // Writing flags to pipe1
       close(fd1[WRITE]);
 
+      char msg[sizeof(flagMask)];
+      flagsToString(flags,msg);
+      logSEND_PIPE(msg);
+
       // Recovering original path
       memset(flags->path,'\0',MAX_PATH);
       strcpy(flags->path,tempPath);
 
       read(fd2[READ],&subDirSize,sizeof(long int)); // Reading subdirectory size from pipe2
       close(fd2[READ]);
+
+      char msg2[17];
+      sprintf(msg2, "subDirSize = %ld", subDirSize);
+      logRECV_PIPE(msg2);
    }
    else{ //CHILD
       close(fd1[WRITE]);   // pipe1 (parent -> child) - child process reads the flags from pipe1 (do not write)
@@ -437,6 +468,7 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
 
       dup2(fd2[WRITE],STDOUT_FILENO); // Performing dup for later writing to pipe2
       
+      // logSEND_SIGNAL(SIGUSR1,getpid());
       kill(pid,SIGUSR1); // Identifying this as a child process 
 
       char stdoutStr[10];
@@ -476,6 +508,7 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
 
       if(getStatus(flags->L,&stat_buf,pathname)){
          fprintf(stderr, "Stat error in %s\n", pathname);
+         logEXIT(ERROR);
          exit(ERROR);
       }
    
@@ -560,7 +593,8 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
    // Printing all regular files if --all (-a) is active
    if(flags->a)
       dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
-   
+   logENTRY(size,pathname);
+
    // For -B option, we want to show one size, but pass another to the total size calculation
    if(flags->B || (!flags->B && !flags->b)) 
       size = sizeBTemp;

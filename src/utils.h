@@ -27,6 +27,15 @@ void error_sys(char * msg);
 void printFlags(flagMask * flags, char * description);
 
 /**
+ * @brief Gets @p flags as a string
+ * See code for format details
+ * @param flags flagMask to be converted to a string
+ * @param str the returning formatted output from the flagMask @p flag
+ * @note For Debugging Purposes AND logRECV_PIPE or logSEND_PIPE
+*/
+void flagsToString(flagMask * flags, char * str);
+
+/**
  * @brief Block SIGUSR1
  * @return OK if no error occurred, ERROR otherwise
 */
