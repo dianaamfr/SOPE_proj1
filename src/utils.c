@@ -342,19 +342,21 @@ int checkArgs(int argc, char * argv[], flagMask * flags){
 }
 
 void removeDuplicateBar(char * path){ 
-    if (path[0] == '\0') 
+   
+   if (path[0] == '\0') 
       return; 
 
-   if (path[0] != '.') return;
+   if (path[0] != '.') 
+      return;
 
    for (int i = 1; path[i] != '\0'; i++){
       if (path[i] != '/') 
          return;
    }
    
-   //se o caminho é do tipo .///
-    memset(path, 0, MAX_PATH);
-    strcpy(path, ".");
+   // If path if of the type .///
+   memset(path, 0, MAX_PATH);
+   strcpy(path, ".");
 } 
 
 int validatePath(char * path){
@@ -429,8 +431,8 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
 
          totalSize += processSubdir(stdout, flags, pathname);
 
-         //Cada iteracao é um elemento(subdiretorio) de um determinado diretorio
-         //Para a respetiva iteracao nao se quer que a flag seja influenciada por subdiretorios anteriores
+         // Each iteration represents an element (file or subdirectory) of the current directory
+         // The --max-depth current value must not be changed by previous subdirectories that were found
          if (flags->d)
             flags->N++;
       }
@@ -451,7 +453,7 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
    if (pipe(fd1) < 0 || pipe(fd2) < 0)
       error_sys("Pipe error!\n");
 
-   //Ao entrar num subdiretorio decrementa a flag --max-depth 
+   // Entering a subdirectory, the --max-depth value is decremented
    if (flags->d)
       flags->N--;
 
@@ -545,7 +547,7 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
       if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
          size += dirFileSize(flags,&stat_buf,pathname,oldStdout);
 
-         //Incrementa-se para voltar ao sub-nível anterior
+         // The --max-depth value is incremented to return to the previous sub-level
          if (flags->d)
             flags->N++;
       } 
@@ -560,7 +562,7 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
    
    long int sizeBTemp = 0, size = 0;
 
-   //Ao entrar num ficheiro decrementa a flag --max-depth 
+   // When in the presence of a file, --max-depth value is also decremented
    if (flags->d)
       flags->N--;
 
