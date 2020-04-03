@@ -104,6 +104,12 @@ long int checkBsize(char * optarg);
 int checkArgs(int argc, char * argv[], flagMask * flags);
 
 /**
+ * @brief Check if the @p path is referring the current directory and remove duplicate '/' if it is
+ * @param path current path to be checked
+*/
+void removeDuplicateBar(char * path);
+
+/**
  * @brief Check if the @p path exists
  * @param path current path to be checked
  * @return OK if path exists, ERRORARGS otherwise
@@ -126,7 +132,7 @@ int getStatus(int flag_L, struct stat * stat_buf, char * path);
  * @param stat_buf where resides the info about the current directory
  * @return the size of the current directory
 */
-int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf);
+int currentDirSize(int flags_b, struct stat * stat_buf);
 
 /**
  * @brief Gets the size of the subdirectories in one directory

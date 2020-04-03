@@ -341,6 +341,22 @@ int checkArgs(int argc, char * argv[], flagMask * flags){
    return OK;
 }
 
+void removeDuplicateBar(char * path){ 
+    if (path[0] == '\0') 
+      return; 
+
+   if (path[0] != '.') return;
+
+   for (int i = 1; path[i] != '\0'; i++){
+      if (path[i] != '/') 
+         return;
+   }
+   
+   //se o caminho é do tipo .///
+    memset(path, 0, MAX_PATH);
+    strcpy(path, ".");
+} 
+
 int validatePath(char * path){
 
    struct stat stat_buf;
@@ -351,6 +367,8 @@ int validatePath(char * path){
       strcpy(path, ".");
       return OK;
    }
+   
+   removeDuplicateBar(path);
 
    if (lstat(path, &stat_buf) == OK) 
       return OK;
@@ -372,7 +390,7 @@ int getStatus(int flag_L, struct stat * stat_buf, char * path){
    return OK;
 }
 
-int currentDirSize(int flags_B, int flags_b, struct stat * stat_buf){
+int currentDirSize(int flags_b, struct stat * stat_buf){
    if (flags_b){
       return stat_buf->st_size;
    }
@@ -506,7 +524,6 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
    long int size = 0;
 
    // Searching for regular files and symbolic links in the current directory
-   // TODO: separar em função auxiliar
    while ((direntp = readdir(dirp)) != NULL) {
       
       char *pathname;

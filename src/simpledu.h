@@ -10,9 +10,6 @@
 #ifndef SIMPLEDU
 #define SIMPLEDU
 
-#include <sys/stat.h>
-#include "types.h"
-
 /**
  * @brief Main function for simpledu command 
 */
