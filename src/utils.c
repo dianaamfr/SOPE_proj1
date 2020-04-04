@@ -349,7 +349,7 @@ void removeDuplicateBar(char * path){
    if (path[0] == '\0') 
       return; 
 
-   if (path[0] != '.') 
+   if (path[0] != '.' && path[0] != '/' ) 
       return;
 
    for (int i = 1; path[i] != '\0'; i++){
@@ -358,8 +358,14 @@ void removeDuplicateBar(char * path){
    }
    
    // If path if of the type .///
-   memset(path, 0, MAX_PATH);
-   strcpy(path, ".");
+   if (path[0] == '.'){
+      memset(path, 0, MAX_PATH);
+      strcpy(path, ".");
+   }
+   else{
+      memset(path, 0, MAX_PATH);
+      strcpy(path, "/");
+   }
 } 
 
 int validatePath(char * path){
@@ -417,7 +423,10 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
       if (pathname == NULL) 
          error_sys("Memory Allocation error\n");
 
-      sprintf(pathname, "%s/%s", flags->path, direntp->d_name); // Saves subdirectory path
+      if(strcmp("/",flags->path) == 0) 
+         sprintf(pathname, "%s%s", flags->path, direntp->d_name);
+      else
+         sprintf(pathname, "%s/%s", flags->path, direntp->d_name);
 
       if(getStatus(flags->L, &stat_buf, pathname) != OK){
 
@@ -539,7 +548,10 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
          error_sys("Memory Allocation error\n");
    
       // Saves the path of the file found
-      sprintf(pathname, "%s/%s", flags->path, direntp->d_name);
+      if(strcmp("/",flags->path) == 0) 
+         sprintf(pathname, "%s%s", flags->path, direntp->d_name);
+      else
+         sprintf(pathname, "%s/%s", flags->path, direntp->d_name);
 
       if(getStatus(flags->L,&stat_buf,pathname)){
          fprintf(stderr, "Stat error in %s\n", pathname);
