@@ -87,10 +87,13 @@ void blockSIGUSR1(){
 int pendingSIGUSR1(){
 
    sigset_t pending_signals;
+   int sig;
 
    // Checking for pending SIGUSR1
    if (sigpending(&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1)){
       // logRECV_SIGNAL(SIGUSR1);
+      sigwait(&pending_signals,&sig);
+
       return OK;
    }
 
@@ -498,7 +501,7 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
       dup2(fd2[WRITE],STDOUT_FILENO); // Performing dup for later writing to pipe2
       
       // logSEND_SIGNAL(SIGUSR1,getpid());
-      kill(pid,SIGUSR1); // Identifying this as a child process 
+      kill(getpid(),SIGUSR1); // Identifying this as a child process 
 
       char stdoutStr[10];
 

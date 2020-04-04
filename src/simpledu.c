@@ -66,6 +66,8 @@ int main(int argc, char * argv[], char * envp[]){
 
       attachSIGHandler(action, SIGINT, sigHandler);
 
+      attachSIGHandler(action, SIGCHLD, SIG_IGN);
+
       // The args/flags must be checked
       if (checkArgs(argc,argv,&flags) != OK){
          fprintf(stderr,"Usage: %s -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]\n",argv[0]);
@@ -147,12 +149,12 @@ int main(int argc, char * argv[], char * envp[]){
    // and computed dirInfo.size in the end by dividing the total size by the size_b specified
 
    if (flags.d && flags.N >= 0)
-      dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, flags.path);
+      dprintf(oldStdout,"%-*ld%s\n", 6, totalSize, flags.path);
    
    else if (!flags.d)
-      dprintf(oldStdout,"%-8ld  %-10s\n", totalSize, flags.path);
+      dprintf(oldStdout,"%-*ld%s\n", 6, totalSize, flags.path);
    logENTRY(totalSize,flags.path);
-
+   
    logEXIT(OK);
    exit(OK);
 }

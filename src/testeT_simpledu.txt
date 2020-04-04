@@ -1,0 +1,6 @@
+11756	../test/testFolder2
+11740	../test/testFolder2/D1
+8	../test/testFolder2/D1/Da
+11720	../test/testFolder2/D1/Db
+11708	../test/testFolder2/D1/Db/Dx
+8	../test/testFolder2/D2
