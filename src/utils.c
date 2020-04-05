@@ -418,15 +418,20 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
 
    while ((direntp = readdir(dirp)) != NULL) {
 
-      char * pathname = malloc(strlen(flags->path) + 1 + strlen(direntp->d_name) + 1);
+       char pathname[MAX_PATH];
       
       if (pathname == NULL) 
          error_sys("Memory Allocation error\n");
 
-      if(strcmp("/",flags->path) == 0) 
-         sprintf(pathname, "%s%s", flags->path, direntp->d_name);
-      else
-         sprintf(pathname, "%s/%s", flags->path, direntp->d_name);
+      if(strcmp("/",flags->path) == 0){
+          if (snprintf(pathname,MAX_PATH, "%s%s", flags->path, direntp->d_name) < 0) 
+            error_sys("New path allocation error\n");
+      }
+      else{
+          if(snprintf(pathname,MAX_PATH, "%s/%s", flags->path, direntp->d_name) < 0) 
+            error_sys("New path allocation error\n");
+      }
+
 
       if(getStatus(flags->L, &stat_buf, pathname) != OK){
 
@@ -448,8 +453,6 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
          if (flags->d)
             flags->N++;
       }
-
-      free(pathname);
    }
 
    return totalSize;
@@ -540,18 +543,20 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
    // Searching for regular files and symbolic links in the current directory
    while ((direntp = readdir(dirp)) != NULL) {
       
-      char *pathname;
-
-      pathname = malloc(strlen(flags->path) + 1 + strlen(direntp->d_name) + 1);
+       char pathname[MAX_PATH];
 
       if (pathname == NULL) 
          error_sys("Memory Allocation error\n");
    
       // Saves the path of the file found
-      if(strcmp("/",flags->path) == 0) 
-         sprintf(pathname, "%s%s", flags->path, direntp->d_name);
-      else
-         sprintf(pathname, "%s/%s", flags->path, direntp->d_name);
+      if(strcmp("/",flags->path) == 0){
+          if (snprintf(pathname,MAX_PATH, "%s%s", flags->path, direntp->d_name) < 0) 
+            error_sys("New path allocation error\n");
+      }
+      else{
+          if(snprintf(pathname,MAX_PATH, "%s/%s", flags->path, direntp->d_name) < 0) 
+            error_sys("New path allocation error\n");
+      }
 
       if(getStatus(flags->L,&stat_buf,pathname)){
          fprintf(stderr, "Stat error in %s\n", pathname);
@@ -566,8 +571,6 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
          if (flags->d)
             flags->N++;
       } 
-
-      free(pathname);  
    }
 
    return size;
