@@ -26,7 +26,7 @@ int main(int argc, char * argv[], char * envp[]){
    struct stat stat_buf;
    long totalSize = 0;
 
-   int oldStdout;
+   int stdout_fd;
    bool isSubDir = false;
    
    blockSIGUSR1();
@@ -53,7 +53,7 @@ int main(int argc, char * argv[], char * envp[]){
       logRECV_PIPE(msg);
 
       // Save old stdout descriptor 
-      oldStdout = atoi(argv[1]);
+      stdout_fd = atoi(argv[1]);
    }
    else{ // Otherwise, we are in the parent/main directory
 
@@ -82,7 +82,7 @@ int main(int argc, char * argv[], char * envp[]){
       }
 
       // The old stdout descriptor should be saved to be sent to the child processes
-      oldStdout = dup(STDOUT_FILENO);
+      stdout_fd = dup(STDOUT_FILENO);
 
       // printFlags(&flags,"Running"); 
    }
@@ -103,13 +103,13 @@ int main(int argc, char * argv[], char * envp[]){
          fprintf(stderr, "Could not open directory %s\n", flags.path);
 
       // Adding subdirectories size
-      totalSize += searchSubdirs(dirp, &flags, oldStdout);
+      totalSize += searchSubdirs(dirp, &flags, stdout_fd);
 
       // Returning to the beggining of the current directory
       rewinddir(dirp);
 
       // Adding the size of Regular Files and Symbolic Links
-      totalSize += searchFiles(dirp, &flags, oldStdout);
+      totalSize += searchFiles(dirp, &flags, stdout_fd);
 
       closedir(dirp);
 
@@ -148,11 +148,8 @@ int main(int argc, char * argv[], char * envp[]){
    // For -B with size_b > 1, the calculation is done as -B size_b=1
    // and computed dirInfo.size in the end by dividing the total size by the size_b specified
 
-   if (flags.d && flags.N >= 0)
-      dprintf(oldStdout,"%-ld\t%s\n", totalSize, flags.path);
-   
-   else if (!flags.d)
-      dprintf(oldStdout,"%-ld\t%s\n", totalSize, flags.path);
+   printDirInfo(&flags, totalSize, stdout_fd);
+
    logENTRY(totalSize,flags.path);
    
    logEXIT(OK);

@@ -137,34 +137,33 @@ int currentDirSize(int flags_b, struct stat * stat_buf);
 /**
  * @brief Gets the size of the subdirectories in one directory
  * @param dirp directory stream 
- * @param stat_buf where resides the info about the current directory
  * @param flags flagMask with the active flags
- * @param oldStdout the descriptor to be use for printing the info
+ * @param stdout_fd the descriptor to be use for printing the info
  * @return total size of the current directory
 */
-long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout);
+long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout_fd);
 
 /**
  * @brief Gets the size of one subdirectory
  * Creates a child process to execute simpledu 
  * on the subdirectory being currently searched.
  * Uses forks, pipes and execs to do it.
- * @param stdout the old descriptor to be sent to the new process
+ * @param stdout_fd the old descriptor to be sent to the new process
  * @param flags flagMask with active flags
  * @param subDirPath the path of the subdirectory to be processed
  * @return the size of the subdirectory
 */
-long int processSubdir(int stdout, flagMask * flags, char * subDirPath);
+long int processSubdir(int stdout_fd, flagMask * flags, char * subDirPath);
 
 /**
  * @brief Gets the size of the files in the current directory
  * @param dirp directory stream 
  * @param stat_buf where resides the info about the current directory
  * @param flags flagMask with active flags
- * @param oldStdout the descriptor to be use for printing the info
+ * @param stdout_fd the descriptor to be use for printing the info
  * @return the size of the files present in the current directory
 */
-long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout);
+long int searchFiles(DIR * dirp, flagMask * flags, int stdout_fd);
 
 /**
  * @brief Calculates the size of a directory file and prints it if --all is specified
@@ -178,11 +177,11 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
 
 /**
  * @brief Converts the size in system blocks to blocks with size_b
- * @param totalSize the size to be converted
- * @param Bsize the size of the blocks
+ * @param bytesSize the size to be converted
+ * @param blockSize the size of the blocks
  * @return size in blocks of size_b
 */
-double sizeInBlocks(long int totalSize, long int Bsize);
+double sizeInBlocks(long int bytesSize, long int blockSize);
 
 /**
  * @brief Calculates the size of a single regular file
@@ -201,5 +200,22 @@ long int regularFileSize(flagMask * flags, struct stat * stat_buf);
  * @return the size of the symbolic link
 */
 long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf);
+
+/**
+ * @brief Print the size of a file to the console
+ * @param flags flagMask with active flags
+ * @param size file size
+ * @param pathname the path of the file
+ * @param stdout_fd the descriptor to be use for printing the info
+*/
+void printFileInfo(flagMask * flags, long int size, char * pathname, int stdout_fd);
+
+/**
+ * @brief Print the size of a directory to the console
+ * @param flags flagMask with active flags
+ * @param size file size
+ * @param stdout_fd the descriptor to be use for printing the info
+*/
+void printDirInfo(flagMask * flags, long int size, int stdout_fd);
 
 #endif

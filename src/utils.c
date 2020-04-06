@@ -406,11 +406,11 @@ int currentDirSize(int flags_b, struct stat * stat_buf){
       return stat_buf->st_size;
    }
    else { 
-      return stat_buf->st_blksize * ceil((double)stat_buf->st_size/stat_buf->st_blksize);
+      return stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
    }
 }
 
-long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
+long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout_fd){
 
    struct dirent *direntp;
    struct stat stat_buf;
@@ -418,7 +418,7 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
 
    while ((direntp = readdir(dirp)) != NULL) {
 
-       char pathname[MAX_PATH];
+      char pathname[MAX_PATH];
       
       if (pathname == NULL) 
          error_sys("Memory Allocation error\n");
@@ -434,7 +434,6 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
 
 
       if(getStatus(flags->L, &stat_buf, pathname) != OK){
-
          fprintf(stderr, "Stat error in %s\n", pathname);
          logEXIT(ERRORARGS);
          exit(ERRORARGS);
@@ -446,7 +445,7 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
       // Starts processing the subdirectory
       if (S_ISDIR(stat_buf.st_mode) && isDot && isDoubleDot){
 
-         totalSize += processSubdir(stdout, flags, pathname);
+         totalSize += processSubdir(stdout_fd, flags, pathname);
 
          // Each iteration represents an element (file or subdirectory) of the current directory
          // The --max-depth current value must not be changed by previous subdirectories that were found
@@ -458,7 +457,7 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout){
    return totalSize;
 }
 
-long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
+long int processSubdir(int stdout_fd, flagMask * flags, char * subDirPath){
 
    int fd1[2], fd2[2];
    long int subDirSize;
@@ -486,7 +485,8 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
       memset(flags->path,'\0',MAX_PATH);
       strcpy(flags->path, subDirPath);
 
-      write(fd1[WRITE],flags,sizeof(flagMask)); // Writing flags to pipe1
+      // Writing flags to pipe1
+      write(fd1[WRITE],flags,sizeof(flagMask));
       close(fd1[WRITE]);
 
       char msg[sizeof(flagMask)];
@@ -497,7 +497,8 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
       memset(flags->path,'\0',MAX_PATH);
       strcpy(flags->path,tempPath);
 
-      read(fd2[READ],&subDirSize,sizeof(long int)); // Reading subdirectory size from pipe2
+      // Reading subdirectory size from pipe2
+      read(fd2[READ],&subDirSize,sizeof(long int)); 
       close(fd2[READ]);
 
       char msg2[17];
@@ -518,7 +519,7 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
       char stdoutStr[10];
 
       // Converting old stdout descriptor to string to be passed as an argument
-      sprintf(stdoutStr , "%d", stdout);
+      sprintf(stdoutStr , "%d", stdout_fd);
 
       // Finally, executing it all again; Now for another subdirectory
       execl("simpledu", "simpledu", stdoutStr, NULL);
@@ -534,7 +535,7 @@ long int processSubdir(int stdout, flagMask * flags, char * subDirPath){
       return 0;   
 }
 
-long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
+long int searchFiles(DIR * dirp, flagMask * flags, int stdout_fd){
 
    struct dirent *direntp;
    struct stat stat_buf;
@@ -543,7 +544,7 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
    // Searching for regular files and symbolic links in the current directory
    while ((direntp = readdir(dirp)) != NULL) {
       
-       char pathname[MAX_PATH];
+      char pathname[MAX_PATH];
 
       if (pathname == NULL) 
          error_sys("Memory Allocation error\n");
@@ -565,7 +566,7 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
       }
    
       if (S_ISREG(stat_buf.st_mode) || S_ISLNK(stat_buf.st_mode)){
-         size += dirFileSize(flags,&stat_buf,pathname,oldStdout);
+         size += dirFileSize(flags,&stat_buf,pathname,stdout_fd);
 
          // The --max-depth value is incremented to return to the previous sub-level
          if (flags->d)
@@ -578,95 +579,86 @@ long int searchFiles(DIR * dirp, flagMask * flags, int oldStdout){
 
 long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, int stdout_fd){
    
-   long int sizeBTemp = 0, size = 0;
+   long int tempSize = 0, size = 0;
 
    // When in the presence of a file, --max-depth value is also decremented
    if (flags->d)
       flags->N--;
 
-   if (S_ISREG(stat_buf->st_mode)){ // If it is a regular file
+   // Regular file (may inclusively be the reference of a symbolic link if -L is active)
+   if (S_ISREG(stat_buf->st_mode)){
 
-      // Calculating its size according to the flags:
-      // -b || -B 1 -b || -b -B 1 -> all these situations are equal to -b
+      // Calculating its size according to the flags
       
+      // ./simpledu -b || ./simpledu -B <size> -b || ./simpledu -b -B 1 -> all these situations are equal to -b
       if (flags->b && !flags->B){
          size = stat_buf->st_size;
       }
+
+      // ./simpledu -B <size> (size != 1)
       else if (flags->B && !flags->b){
          size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
-         sizeBTemp = size;
+         tempSize = size;
          size  = sizeInBlocks(size,flags->size);
       }
+
+      // ./simpledu -b -B <size>  (size != 1)
       else if (flags->B && flags->b){
          size  = stat_buf->st_size;
-         sizeBTemp = size;
+         tempSize = size;
          size  = sizeInBlocks(size,flags->size);
       }
-      else{ // simpledu without options = default
+
+      // ./simpledu (without options => default)
+      else{
          size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
-         sizeBTemp = size;
+         tempSize = size;
          size  = sizeInBlocks(size,1024);
       }
    }
 
-   else if (S_ISLNK(stat_buf->st_mode)){ // If it is a symbolic link
+   // Symbolic link (-L NOT active)
+   else if (S_ISLNK(stat_buf->st_mode)){
 
-      // Calculating its size according to the flags:
-      // -b || -B 1 -b || -b -B 1 -> all these situations are equal to -b
+      // Calculating its size according to the flags
 
+      // ./simpledu -b || ./simpledu -B <size> -b || ./simpledu -b -B 1 -> all these situations are equal to -b
+      // Size of the Symbolic Link itself in bytes (without dereferencing)
       if(flags->b && !flags->B){
-         size = stat_buf->st_size; // Counting the size of the link itself in bytes
+         size = stat_buf->st_size;
       }
-      else{ 
-         if(!flags->L){
-            if(flags->B && flags->b){
-               size  = stat_buf->st_size;
-               sizeBTemp = size;
-               size  = ceil((double)size / flags->size);
-            }
-            else 
-               size = 0;
-         }
-         else{ // Dereferencing symbolic links
 
-            if (flags->B && !flags->b){
-               size  = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size, stat_buf->st_blksize);
-               sizeBTemp = size;
-               size  = ceil( (double) size / flags->size);
-            }
-            else if (flags->B && flags->b){
-               size  = stat_buf->st_size;
-               sizeBTemp = size;
-               size  = ceil( (double) size / flags->size);
-            }
-            else{ // simpledu without options = default
-               size  = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
-               sizeBTemp = size;
-               size  = sizeInBlocks(size,1024);
-            }
+      // Size of the Symbolic Link itself in blocks (without dereferencing)
+      else{ 
+
+         // ./simpledu -b -B <size>  (size != 1)
+         if(flags->B && flags->b){
+            size  = stat_buf->st_size;
+            tempSize = size;
+            size  = sizeInBlocks(size,flags->size);
          }
+         else 
+            size = 0;
       }
    }
 
-   // Printing all regular files if --all (-a) is active
-   if(flags->a && flags->d && (flags->N >= 0))
-      dprintf(stdout_fd,"%-ld\t%-s\n", size, pathname);
-
-   else if (!flags->d && flags->a)
-      dprintf(stdout_fd,"%-ld\t%-s\n", size, pathname);
+   printFileInfo(flags,size,pathname,stdout_fd);
 
    logENTRY(size,pathname);
 
    // For -B option, we want to show one size, but pass another to the total size calculation
    if(flags->B || (!flags->B && !flags->b)) 
-      size = sizeBTemp;
+      size = tempSize;
 
    
    return size;
 }
 
-double sizeInBlocks(long int totalSize, long int Bsize){
-   return ceil( (double) totalSize / Bsize);
+double sizeInBlocks(long int bytesSize, long int blockSize){
+   if(bytesSize % blockSize == 0)
+      return bytesSize  / blockSize;
+   else
+      return bytesSize  / blockSize + 1;
 }
 
 long int regularFileSize(flagMask * flags, struct stat * stat_buf){
@@ -680,15 +672,14 @@ long int regularFileSize(flagMask * flags, struct stat * stat_buf){
       return stat_buf->st_size;
    }
    else if (flags->B && !flags->b){
-      totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
+      totalSize = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
       return sizeInBlocks(totalSize,flags->size);
    }
    else if (flags->B && flags->b){ // size_b > 1
       return sizeInBlocks(stat_buf->st_size,flags->size);
    }
    else{ // simpledu without options = default
-      totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
-
+      totalSize = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
       return sizeInBlocks(totalSize,1024);
    }
 }
@@ -700,7 +691,7 @@ long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf){
    // Calculating its size according to the flags:
    // -b || -B 1 -b || -b -B 1 -> all these situations are equal to -b
 
-   if (flags->b && !flags->B){ 
+   if (flags->b && !flags->B){
       return stat_buf->st_size; // Counting the size of the link itself in bytes
    }
    else{ 
@@ -712,17 +703,39 @@ long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf){
       }
       else{ // Dereferencing symbolic links
          if (flags->B && !flags->b){
-            totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
+            totalSize = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
             return sizeInBlocks(totalSize,flags->size);
          }
          else if(flags->B && flags->b){
             return sizeInBlocks(stat_buf->st_size, flags->size);
          }
          else{ // simpledu without options = default
-            totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
-
+            totalSize = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
             return sizeInBlocks(totalSize,1024);
          }
       }
    }
+}
+
+void printFileInfo(flagMask * flags, long int size, char * pathname, int stdout_fd){
+   // Printing all regular files if --all (-a) is active
+
+   //if --max-depth is active, depth >= 0 and --all is active
+   if(flags->a && flags->d && (flags->N >= 0))
+      dprintf(stdout_fd,"%-ld\t%-s\n", size, pathname);
+
+   //if --max-depth is NOT active and --all is active
+   else if (!flags->d && flags->a)
+      dprintf(stdout_fd,"%-ld\t%-s\n", size, pathname);
+}
+
+void printDirInfo(flagMask * flags, long int size, int stdout_fd){
+
+   //if --max-depth is active, depth >= 0
+   if (flags->d && flags->N >= 0)
+      dprintf(stdout_fd,"%-ld\t%s\n", size, flags->path);
+   
+   //if --max-depth is NOT active
+   else if (!flags->d)
+      dprintf(stdout_fd,"%-ld\t%s\n", size, flags->path);
 }
