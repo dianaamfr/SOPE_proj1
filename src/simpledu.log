@@ -1,10 +1,49 @@
-      0.14 - 00018954 -      CREATE - ./simpledu ../../bdad
-      0.25 - 00018954 -       ENTRY - 144 at ../../bdad/projEntrega1.odt
-      0.28 - 00018954 -       ENTRY - 616 at ../../bdad/02.UMLModeling-I.pdf
-      0.29 - 00018954 -       ENTRY - 1344 at ../../bdad/04.UMLToRelations.pdf
-      0.30 - 00018954 -       ENTRY - 1076 at ../../bdad/05.RelationalModelTheory.pdf
-      0.30 - 00018954 -       ENTRY - 348 at ../../bdad/02.RelationalModel.pdf
-      0.31 - 00018954 -       ENTRY - 3344 at ../../bdad/03.UMLModeling-II.pdf
-      0.34 - 00018954 -   SEND_PIPE - totalSize = 7041024
-      0.39 - 00018954 -       ENTRY - 6876 at ../../bdad
-      0.40 - 00018954 -        EXIT - 0
+      0.24 - 00013616 -      CREATE - ./simpledu ../test/testFolder2 -B 2
+      0.56 - 00013616 -   SEND_PIPE - 1001_2_0000_../test/testFolder2/D2_1586161414073.264893
+      1.96 - 00013617 -      CREATE - simpledu 3
+      2.06 - 00013617 -   RECV_PIPE - 1001_2_0000_../test/testFolder2/D2_1586161414073.264893
+      2.17 - 00013617 -       ENTRY - 2048 at ../test/testFolder2/D2/F2.BIN
+      2.24 - 00013617 -   SEND_PIPE - totalSize = 8192
+      2.28 - 00013616 -   RECV_PIPE - subDirSize = 8192
+      2.30 - 00013617 -       ENTRY - 4096 at ../test/testFolder2/D2
+      2.34 - 00013617 -        EXIT - 0
+      2.55 - 00013616 -   SEND_PIPE - 1001_2_0000_../test/testFolder2/D1_1586161414073.264893
+      4.17 - 00013619 -      CREATE - simpledu 3
+      4.30 - 00013619 -   RECV_PIPE - 1001_2_0000_../test/testFolder2/D1_1586161414073.264893
+      4.62 - 00013619 -   SEND_PIPE - 1001_2_0000_../test/testFolder2/D1/Db_1586161414073.264893
+      5.69 - 00013620 -      CREATE - simpledu 3
+      5.73 - 00013620 -   RECV_PIPE - 1001_2_0000_../test/testFolder2/D1/Db_1586161414073.264893
+      5.85 - 00013620 -   SEND_PIPE - 1001_2_0000_../test/testFolder2/D1/Db/Dx_1586161414073.264893
+      6.29 - 00013621 -      CREATE - simpledu 3
+      6.33 - 00013621 -   RECV_PIPE - 1001_2_0000_../test/testFolder2/D1/Db/Dx_1586161414073.264893
+      6.40 - 00013621 -       ENTRY - 0 at ../test/testFolder2/D1/Db/Dx/link2
+      6.42 - 00013621 -       ENTRY - 5990400 at ../test/testFolder2/D1/Db/Dx/doc.pdf
+      6.43 - 00013621 -       ENTRY - 2048 at ../test/testFolder2/D1/Db/Dx/output.log
+      6.45 - 00013621 -   SEND_PIPE - totalSize = 11988992
+      6.46 - 00013620 -   RECV_PIPE - subDirSize = 11988992
+      6.48 - 00013621 -       ENTRY - 5994496 at ../test/testFolder2/D1/Db/Dx
+      6.50 - 00013621 -        EXIT - 0
+      6.51 - 00013620 -       ENTRY - 2048 at ../test/testFolder2/D1/Db/archive.zip
+      6.52 - 00013620 -       ENTRY - 2048 at ../test/testFolder2/D1/Db/pkg.deb
+      6.55 - 00013620 -   SEND_PIPE - totalSize = 12001280
+      6.58 - 00013619 -   RECV_PIPE - subDirSize = 12001280
+      6.59 - 00013620 -       ENTRY - 6000640 at ../test/testFolder2/D1/Db
+      6.61 - 00013620 -        EXIT - 0
+      6.71 - 00013619 -   SEND_PIPE - 1001_2_0000_../test/testFolder2/D1/Da_1586161414073.264893
+      7.13 - 00013622 -      CREATE - simpledu 3
+      7.16 - 00013622 -   RECV_PIPE - 1001_2_0000_../test/testFolder2/D1/Da_1586161414073.264893
+      7.21 - 00013622 -       ENTRY - 2048 at ../test/testFolder2/D1/Da/F3.BIN
+      7.24 - 00013622 -   SEND_PIPE - totalSize = 8192
+      7.24 - 00013619 -   RECV_PIPE - subDirSize = 8192
+      7.28 - 00013622 -       ENTRY - 4096 at ../test/testFolder2/D1/Da
+      7.29 - 00013619 -       ENTRY - 2048 at ../test/testFolder2/D1/dep.d
+      7.29 - 00013622 -        EXIT - 0
+      7.31 - 00013619 -       ENTRY - 2048 at ../test/testFolder2/D1/src.c
+      7.33 - 00013619 -   SEND_PIPE - totalSize = 12021760
+      7.35 - 00013616 -   RECV_PIPE - subDirSize = 12021760
+      7.36 - 00013619 -       ENTRY - 6010880 at ../test/testFolder2/D1
+      7.37 - 00013619 -        EXIT - 0
+      7.39 - 00013616 -       ENTRY - 2048 at ../test/testFolder2/f.txt
+      7.42 - 00013616 -   SEND_PIPE - totalSize = 12038144
+      7.46 - 00013616 -       ENTRY - 6019072 at ../test/testFolder2
+      7.47 - 00013616 -        EXIT - 0

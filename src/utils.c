@@ -406,7 +406,7 @@ int currentDirSize(int flags_b, struct stat * stat_buf){
       return stat_buf->st_size;
    }
    else { 
-      return stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
+      return stat_buf->st_blksize * ceil((double)stat_buf->st_size/stat_buf->st_blksize);
    }
 }
 
@@ -650,10 +650,10 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
 
    // Printing all regular files if --all (-a) is active
    if(flags->a && flags->d && (flags->N >= 0))
-      dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
+      dprintf(stdout_fd,"%-ld\t%-s\n", size, pathname);
 
    else if (!flags->d && flags->a)
-      dprintf(stdout_fd,"%-8ld  %-10s\n", size, pathname);
+      dprintf(stdout_fd,"%-ld\t%-s\n", size, pathname);
 
    logENTRY(size,pathname);
 
@@ -661,6 +661,7 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
    if(flags->B || (!flags->B && !flags->b)) 
       size = sizeBTemp;
 
+   
    return size;
 }
 
@@ -680,7 +681,6 @@ long int regularFileSize(flagMask * flags, struct stat * stat_buf){
    }
    else if (flags->B && !flags->b){
       totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
-
       return sizeInBlocks(totalSize,flags->size);
    }
    else if (flags->B && flags->b){ // size_b > 1
@@ -713,8 +713,7 @@ long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf){
       else{ // Dereferencing symbolic links
          if (flags->B && !flags->b){
             totalSize = stat_buf->st_blksize * ceil( (double) stat_buf->st_size / stat_buf->st_blksize);
-
-         return sizeInBlocks(totalSize,flags->size);
+            return sizeInBlocks(totalSize,flags->size);
          }
          else if(flags->B && flags->b){
             return sizeInBlocks(stat_buf->st_size, flags->size);

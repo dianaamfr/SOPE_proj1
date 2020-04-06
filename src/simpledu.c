@@ -149,10 +149,10 @@ int main(int argc, char * argv[], char * envp[]){
    // and computed dirInfo.size in the end by dividing the total size by the size_b specified
 
    if (flags.d && flags.N >= 0)
-      dprintf(oldStdout,"%-8ld%s\n", totalSize, flags.path);
+      dprintf(oldStdout,"%-ld\t%s\n", totalSize, flags.path);
    
    else if (!flags.d)
-      dprintf(oldStdout,"%-8ld%s\n", totalSize, flags.path);
+      dprintf(oldStdout,"%-ld\t%s\n", totalSize, flags.path);
    logENTRY(totalSize,flags.path);
    
    logEXIT(OK);
