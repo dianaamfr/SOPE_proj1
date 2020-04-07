@@ -181,7 +181,7 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
  * @param blockSize the size of the blocks
  * @return size in blocks of size_b
 */
-double sizeInBlocks(long int bytesSize, long int blockSize);
+long int sizeInBlocks(long int bytesSize, long int blockSize);
 
 /**
  * @brief Calculates the size of a single regular file

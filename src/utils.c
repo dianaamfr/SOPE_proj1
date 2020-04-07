@@ -406,7 +406,7 @@ int currentDirSize(int flags_b, struct stat * stat_buf){
       return stat_buf->st_size;
    }
    else { 
-      return stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+      return stat_buf->st_blocks*512;
    }
 }
 
@@ -597,7 +597,7 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
 
       // ./simpledu -B <size> (size != 1)
       else if (flags->B && !flags->b){
-         size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+         size  = stat_buf->st_blocks*512;
          tempSize = size;
          size  = sizeInBlocks(size,flags->size);
       }
@@ -611,7 +611,7 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
 
       // ./simpledu (without options => default)
       else{
-         size  = stat_buf->st_blksize*sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+         size  = stat_buf->st_blocks*512;
          tempSize = size;
          size  = sizeInBlocks(size,1024);
       }
@@ -654,7 +654,7 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
    return size;
 }
 
-double sizeInBlocks(long int bytesSize, long int blockSize){
+long int sizeInBlocks(long int bytesSize, long int blockSize){
    if(bytesSize % blockSize == 0)
       return bytesSize  / blockSize;
    else
@@ -672,14 +672,14 @@ long int regularFileSize(flagMask * flags, struct stat * stat_buf){
       return stat_buf->st_size;
    }
    else if (flags->B && !flags->b){
-      totalSize = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+      totalSize = stat_buf->st_blocks*512;
       return sizeInBlocks(totalSize,flags->size);
    }
    else if (flags->B && flags->b){ // size_b > 1
       return sizeInBlocks(stat_buf->st_size,flags->size);
    }
    else{ // simpledu without options = default
-      totalSize = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+      totalSize = stat_buf->st_blocks*512;
       return sizeInBlocks(totalSize,1024);
    }
 }
@@ -703,14 +703,14 @@ long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf){
       }
       else{ // Dereferencing symbolic links
          if (flags->B && !flags->b){
-            totalSize = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+            totalSize = stat_buf->st_blocks*512;
             return sizeInBlocks(totalSize,flags->size);
          }
          else if(flags->B && flags->b){
             return sizeInBlocks(stat_buf->st_size, flags->size);
          }
          else{ // simpledu without options = default
-            totalSize = stat_buf->st_blksize * sizeInBlocks(stat_buf->st_size,stat_buf->st_blksize);
+            totalSize = stat_buf->st_blocks*512;
             return sizeInBlocks(totalSize,1024);
          }
       }
