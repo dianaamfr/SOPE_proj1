@@ -9,7 +9,7 @@
 #define READ 0
 #define WRITE 1
 
-#define MAX_PATH 200 
+#define MAX_PATH 300 
 #define MAX_SIZE 50 
 #define MAX_NUM_PATHS 5 
 #define MAX_BLOCK_STR_SIZE 10 

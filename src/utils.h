@@ -127,7 +127,6 @@ int getStatus(int flag_L, struct stat * stat_buf, char * path);
 
 /**
  * @brief Gets the size of one directory (without counting files/subdirectories)
- * @param flags_B B flag
  * @param flags_b b flag
  * @param stat_buf where resides the info about the current directory
  * @return the size of the current directory
