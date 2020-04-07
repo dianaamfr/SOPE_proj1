@@ -8,9 +8,9 @@
 #ifndef AUX_H
 #define AUX_H
 
-#include "types.h"
 #include <sys/stat.h>
 #include <dirent.h>
+#include "types.h"
 
 /**
  * @brief Print an error message @p msg to stderr
@@ -75,6 +75,15 @@ int pendingSIGUSR1();
 */
 void sigHandler(int signo);
 
+
+/**
+ * @brief Signal Handler for assigned signal SIGBUS
+ * Only used by the main parent process to kill all its childs
+ * if a string size memory error was detected when reading paths
+ * @param signo signal received
+*/
+void sigBUSHandler(int signo);
+
 /**
  * @brief Attaches the @p handler of the signal @p SIG to the current process
  * @param action struct for attaching the handler and registering it
@@ -82,6 +91,13 @@ void sigHandler(int signo);
  * @param handler prototyped Handler function to be attached to the signal
 */
 void attachSIGHandler(struct sigaction action, int SIG, __sighandler_t handler);
+
+/**
+ * @brief Check if the @p do not exceeds the LIMIT_PATH size
+ * @param path path to be checked
+ * @return OK if not exceeded, ERRORARGS otherwise
+*/
+int validPathSize(char * path);
 
 /**
  * @brief Check if the size B is valid
@@ -201,19 +217,19 @@ long int regularFileSize(flagMask * flags, struct stat * stat_buf);
 long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf);
 
 /**
- * @brief Print the size of a file to the console
+ * @brief Print the size of a file
  * @param flags flagMask with active flags
  * @param size file size
- * @param pathname the path of the file
- * @param stdout_fd the descriptor to be use for printing the info
+ * @param pathname the file path
+ * @param stdout_fd the descriptor to be used for printing the info
 */
 void printFileInfo(flagMask * flags, long int size, char * pathname, int stdout_fd);
 
 /**
- * @brief Print the size of a directory to the console
+ * @brief Print the size of a directory
  * @param flags flagMask with active flags
  * @param size file size
- * @param stdout_fd the descriptor to be use for printing the info
+ * @param stdout_fd the descriptor to be used for printing the info
 */
 void printDirInfo(flagMask * flags, long int size, int stdout_fd);
 

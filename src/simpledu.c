@@ -37,6 +37,8 @@ int main(int argc, char * argv[], char * envp[]){
 
    attachSIGHandler(action, SIGINT, SIG_IGN);
 
+   attachSIGHandler(action, SIGBUS, sigHandler);
+
    if (pendingSIGUSR1() == OK){ // If SIGUSR1 is pending, then we are currently in a subdirectory
       
       // Read the flags from pipe
@@ -67,6 +69,8 @@ int main(int argc, char * argv[], char * envp[]){
       attachSIGHandler(action, SIGINT, sigHandler);
 
       attachSIGHandler(action, SIGCHLD, SIG_IGN);
+
+      attachSIGHandler(action, SIGBUS, sigBUSHandler);
 
       // The args/flags must be checked
       if (checkArgs(argc,argv,&flags) != OK){

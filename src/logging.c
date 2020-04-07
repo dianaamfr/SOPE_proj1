@@ -20,7 +20,7 @@ int appendLogInfo(action a, char * info){
 
         // Calculating the milliseconds elapsed from the init instant
         double time = (double) (stop.tv_sec - start.tv_sec) * 1000.0 + (double) (stop.tv_usec - start.tv_usec) / 1000.0;
-        char logBuffer[MAX_PATH+MAX_SIZE];
+        char logBuffer[MAX_PATH + MAX_SIZE];
 
         sprintf(logBuffer,"%10.2f - %08d - %11s - %s\n", time, getpid(), actions[a], info);
         
@@ -36,7 +36,7 @@ int appendLogInfo(action a, char * info){
 
 int logCREATE(int argc, char* args[]){
 
-    char info[MAX_PATH] = "";
+    char info[MAX_PATH + MAX_SIZE] = "";
     
     if(argc > 0)
         for(int i = 0; i < argc; i++){
@@ -80,7 +80,7 @@ int logSEND_SIGNAL(int SIG, int pid){
 
 int logRECV_PIPE(char * msg){
 
-    char info[MAX_PATH] = "";
+    char info[MAX_PATH + MAX_SIZE] = "";
     
     sprintf(info,"%s",msg);       
 
@@ -89,7 +89,7 @@ int logRECV_PIPE(char * msg){
 
 int logSEND_PIPE(char * msg){
 
-    char info[MAX_PATH] = "";
+    char info[MAX_PATH + MAX_SIZE] = "";
     
     sprintf(info,"%s",msg);  
 
@@ -98,7 +98,7 @@ int logSEND_PIPE(char * msg){
 
 int logENTRY(long int bytes, char * path){
 
-    char info[MAX_PATH+MAX_SIZE] = "";
+    char info[MAX_PATH + MAX_SIZE] = "";
     
     sprintf(info,"%ld at %s", bytes, path);
 

@@ -13,6 +13,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
+#include "types.h"
 #include "utils.h"
 #include "logging.h"
 
@@ -139,6 +140,25 @@ void sigHandler(int signo){
       logSEND_SIGNAL(SIGSTOP, getpid());    
       kill(getpid(), SIGSTOP); // Sending a SIGSTOP to all child processess themselves
    }
+
+   if(signo == SIGBUS){
+      logRECV_SIGNAL(SIGBUS);    
+
+      logSEND_SIGNAL(SIGBUS, getppid());   
+      kill(getppid(), SIGBUS);
+   }
+}
+
+void sigBUSHandler(int signo){
+   if (signo == SIGBUS) {
+      logRECV_SIGNAL(SIGBUS); 
+
+      fprintf(stderr, "Max Path Size (%d) exceeded\n", LIMIT_PATH);
+      
+      logSEND_SIGNAL(SIGTERM, -getpgrp());
+      logEXIT(SIGTERM);
+      kill(-getpgrp(), SIGTERM); // Sending a SIGTERM to all processess, including the parent himself
+   }
 }
 
 void attachSIGHandler(struct sigaction action, int SIG, __sighandler_t handler){
@@ -152,6 +172,10 @@ void attachSIGHandler(struct sigaction action, int SIG, __sighandler_t handler){
       logEXIT(ERROR);
       exit(ERROR);
    }
+}
+
+int validPathSize(char * path){
+   return !( strlen(path) < LIMIT_PATH );
 }
 
 long int checkBsize(char * optarg) {
@@ -329,6 +353,11 @@ int checkArgs(int argc, char * argv[], flagMask * flags){
       // printf("PATH IS %s\n", tempFlags.path);
    }
 
+   if ( validPathSize(tempFlags.path) != OK ){
+      fprintf(stderr, "Max Path Size (%d) exceeded\n", LIMIT_PATH);
+      return ERRORARGS;
+   }
+
    flags->a = tempFlags.a;
    flags->b = tempFlags.b;
    flags->B = tempFlags.B;
@@ -406,7 +435,7 @@ int currentDirSize(int flags_b, struct stat * stat_buf){
       return stat_buf->st_size;
    }
    else { 
-      return stat_buf->st_blocks*512;
+      return stat_buf->st_blocks * 512;
    }
 }
 
@@ -432,6 +461,11 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout_fd){
             error_sys("New path allocation error\n");
       }
 
+      if (validPathSize(pathname) != OK ){
+         kill(getpid(),SIGBUS);
+         logEXIT(ERRORARGS);
+         exit(ERRORARGS);
+      }
 
       if(getStatus(flags->L, &stat_buf, pathname) != OK){
          fprintf(stderr, "Stat error in %s\n", pathname);
@@ -559,6 +593,13 @@ long int searchFiles(DIR * dirp, flagMask * flags, int stdout_fd){
             error_sys("New path allocation error\n");
       }
 
+      if (validPathSize(pathname) != OK ){
+         logSEND_SIGNAL(SIGBUS,getpid());
+         kill(getpid(),SIGBUS);
+         logEXIT(ERRORARGS);
+         exit(ERRORARGS);
+      }
+
       if(getStatus(flags->L,&stat_buf,pathname)){
          fprintf(stderr, "Stat error in %s\n", pathname);
          logEXIT(ERROR);
@@ -597,7 +638,7 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
 
       // ./simpledu -B <size> (size != 1)
       else if (flags->B && !flags->b){
-         size  = stat_buf->st_blocks*512;
+         size  = stat_buf->st_blocks * 512;
          tempSize = size;
          size  = sizeInBlocks(size,flags->size);
       }
@@ -611,7 +652,7 @@ long int dirFileSize(flagMask * flags, struct stat * stat_buf, char * pathname, 
 
       // ./simpledu (without options => default)
       else{
-         size  = stat_buf->st_blocks*512;
+         size  = stat_buf->st_blocks * 512;
          tempSize = size;
          size  = sizeInBlocks(size,1024);
       }
@@ -672,14 +713,14 @@ long int regularFileSize(flagMask * flags, struct stat * stat_buf){
       return stat_buf->st_size;
    }
    else if (flags->B && !flags->b){
-      totalSize = stat_buf->st_blocks*512;
+      totalSize = stat_buf->st_blocks * 512;
       return sizeInBlocks(totalSize,flags->size);
    }
    else if (flags->B && flags->b){ // size_b > 1
       return sizeInBlocks(stat_buf->st_size,flags->size);
    }
    else{ // simpledu without options = default
-      totalSize = stat_buf->st_blocks*512;
+      totalSize = stat_buf->st_blocks * 512;
       return sizeInBlocks(totalSize,1024);
    }
 }
@@ -703,14 +744,14 @@ long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf){
       }
       else{ // Dereferencing symbolic links
          if (flags->B && !flags->b){
-            totalSize = stat_buf->st_blocks*512;
+            totalSize = stat_buf->st_blocks * 512;
             return sizeInBlocks(totalSize,flags->size);
          }
          else if(flags->B && flags->b){
             return sizeInBlocks(stat_buf->st_size, flags->size);
          }
          else{ // simpledu without options = default
-            totalSize = stat_buf->st_blocks*512;
+            totalSize = stat_buf->st_blocks * 512;
             return sizeInBlocks(totalSize,1024);
          }
       }
@@ -720,22 +761,22 @@ long int symbolicLinkSize(flagMask * flags, struct stat * stat_buf){
 void printFileInfo(flagMask * flags, long int size, char * pathname, int stdout_fd){
    // Printing all regular files if --all (-a) is active
 
-   //if --max-depth is active, depth >= 0 and --all is active
+   // If --max-depth is active, depth >= 0 and --all is active
    if(flags->a && flags->d && (flags->N >= 0))
       dprintf(stdout_fd,"%-ld\t%-s\n", size, pathname);
 
-   //if --max-depth is NOT active and --all is active
+   // If --max-depth is NOT active and --all is active
    else if (!flags->d && flags->a)
       dprintf(stdout_fd,"%-ld\t%-s\n", size, pathname);
 }
 
 void printDirInfo(flagMask * flags, long int size, int stdout_fd){
 
-   //if --max-depth is active, depth >= 0
+   // If --max-depth is active, depth >= 0
    if (flags->d && flags->N >= 0)
       dprintf(stdout_fd,"%-ld\t%s\n", size, flags->path);
    
-   //if --max-depth is NOT active
+   // If --max-depth is NOT active
    else if (!flags->d)
       dprintf(stdout_fd,"%-ld\t%s\n", size, flags->path);
 }

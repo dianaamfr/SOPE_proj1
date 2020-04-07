@@ -9,7 +9,8 @@
 #define READ 0
 #define WRITE 1
 
-#define MAX_PATH 256 
+#define MAX_PATH 300 
+#define LIMIT_PATH 256
 #define MAX_SIZE 50 
 #define MAX_NUM_PATHS 5 
 #define MAX_BLOCK_STR_SIZE 10 
@@ -30,7 +31,7 @@ typedef struct flagMask{
   int  S;                                   /*< -S, --separate-dirs -> for directories: do not include size of subdirectories */
   int  d;                                   /*< -d, --max-depth     -> print the total for a directory (or file, with --all) */
   int  N;                                   /*< N                   -> only if it is N or fewer levels below the command line argument; */
-  char path[MAX_PATH];                      /*< pathname */
+  char path[MAX_PATH];                           /*< pathname */
   struct timeval startTime;                 /*< starTime            -> init instance of the program */
 } flagMask;
 
