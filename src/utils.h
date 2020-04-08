@@ -19,6 +19,24 @@
 void error_sys(char * msg);
 
 /**
+ * @brief Block SIGUSR2
+ * @return OK if no error occurred, ERROR otherwise
+*/
+void blockSIGUSR2();
+
+/**
+ * @brief Check for pending SIGUSR2
+ * SIGUSR2 is sent by a child process to itself.
+ * Used to know when the parent process should overwrite 
+ * the environment variable if it exists.
+ * The only process that should not have pending 
+ * signals when it starts running is the first process, 
+ * the one that runs on the first directory.
+ * @return OK if no error occurred, ERROR otherwise
+*/
+int pendingSIGUSR2();
+
+/**
  * @brief Print active flags
  * @param flags flagMask to be printed
  * @param description with a simple message about the reason for printing the flags
@@ -36,39 +54,41 @@ void printFlags(flagMask * flags, char * description);
 void flagsToString(flagMask * flags, char * str);
 
 /**
- * @brief Block SIGUSR1
- * @return OK if no error occurred, ERROR otherwise
+ * @brief Check if the current process is a subprocess
+ * Checks the value of the environment variable which stores the pid of the parent process
+ * @return OK if it is a subprocess, ERROR otherwise
 */
-void blockSIGUSR1();
+int isChildProcess();
 
 /**
- * @brief Check for pending SIGUSR1
- * SIGUSR1 is sent by a child process to itself.
- * The only process that should not have pending 
- * signals when it starts running is the first process, 
- * the one that runs on the first directory
- * @return OK if no error occurred, ERROR otherwise
+ * @brief Get the pid of the parent of all processes
+ * @return The pid of the parent of all processes
 */
-int pendingSIGUSR1();
+int getParentPid();
 
 /**
- * @brief Signal Handler for assigned signals SIGINT and SIGUSR2
+ * @brief Set an environment variable with the pid of the parent of all processes
+*/
+void setParentPid();
+
+/**
+ * @brief Wait for unfinished subprocesses before exiting current process
+*/
+void waitForSubprocesses();
+
+/**
+ * @brief Signal Handler for assigned signals SIGINT and SIGUSR1
  * Only those two have this handler attached, but many more have a part in the job
  * Naming them all: 
  * SIGINT   - for user interaction
  * SIGSTOP  - for stopping all processess from the process group
  * SIGCONT  - for continuing the work
  * SIGTERM  - for terminating everything
- * SIGUSR2  - for the mechanism behind sending signals to every child process
  * It works as simples as this: 
  * User sends SIGINT by pressing Ctrl+C.
- * It is firstly IGNored by all processes, except by the parent process.
- * The SIGUSR2, in other hand, is only IGNored by the parent process, 
- * having this handler attached to the other processess.
- * When the parent process receives the SIGINT, it notifies 
- * all the processess from its pgroup with a SIGUSR2.
- * So they, except him, receive a SIGUSR2 and send to 
- * themselves a SIGSTOP, stopping all, except the parent.
+ * It is firstly ignored by all processes, except by the parent of all processes.
+ * When the parent of all processes receives the SIGINT, it sends a SIGSTOP
+ * to the processess from the group of all other subprocesses.
  * The parent, now, waits for the user decision of continuing, 
  * sending a SIGCONT to all, or terminating, sending a SIGTERM.
  * @param signo signal received
@@ -77,12 +97,13 @@ void sigHandler(int signo);
 
 
 /**
- * @brief Signal Handler for assigned signal SIGBUS
- * Only used by the main parent process to kill all its childs
- * if a string size memory error was detected when reading paths
+ * @brief Signal Handler for assigned signal SIGUSR1
+ * Only used by the main parent process to kill all the subprocesses
+ * if a string size memory error was detected when reading paths. 
+ * This is done by sending a SIGTERM to all subprocesses and finally to itself.
  * @param signo signal received
 */
-void sigBUSHandler(int signo);
+void sigUSR1Handler(int signo);
 
 /**
  * @brief Attaches the @p handler of the signal @p SIG to the current process

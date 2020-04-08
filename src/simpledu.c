@@ -16,10 +16,19 @@
 #include "utils.h"
 #include "logging.h"
 
+pid_t gid = -1;
+
 int main(int argc, char * argv[], char * envp[]){
-   
+
    gettimeofday(&start, NULL);
    setenv("LOG_FILENAME","simpledu.log",1);
+
+   // Initially block SIGUSR2
+   blockSIGUSR2();
+
+   // Set parent pid environment variable only if in the father of all processes
+   if(pendingSIGUSR2() != OK)
+      setParentPid();
 
    flagMask flags;
    DIR *dirp;
@@ -27,26 +36,19 @@ int main(int argc, char * argv[], char * envp[]){
    long totalSize = 0;
 
    int stdout_fd;
-   bool isSubDir = false;
-   
-   blockSIGUSR1();
 
    struct sigaction action;
 
-   attachSIGHandler(action, SIGUSR2, sigHandler);
-
    attachSIGHandler(action, SIGINT, SIG_IGN);
 
-   attachSIGHandler(action, SIGBUS, sigHandler);
-
-   if (pendingSIGUSR1() == OK){ // If SIGUSR1 is pending, then we are currently in a subdirectory
-      
+   attachSIGHandler(action, SIGUSR1, SIG_IGN);
+   
+   // We are currently in a subprocess
+   if (isChildProcess() == OK){
       // Read the flags from pipe
       if (read(STDIN_FILENO,&flags,sizeof(flagMask)) == -1)
          error_sys("Error reading pipe\n");
       
-      isSubDir = true;
-
       start = flags.startTime;
       logCREATE(argc,argv);
       
@@ -55,22 +57,18 @@ int main(int argc, char * argv[], char * envp[]){
       logRECV_PIPE(msg);
 
       // Save old stdout descriptor 
-      stdout_fd = atoi(argv[1]);
+      stdout_fd = atoi(argv[1]);     
    }
-   else{ // Otherwise, we are in the parent/main directory
-
+   // Otherwise, we are in the parent of all processes / main directory
+   else{
       clearLogfile();
 
       logCREATE(argc,argv);
       flags.startTime = start;
 
-      attachSIGHandler(action, SIGUSR2, SIG_IGN);
-
       attachSIGHandler(action, SIGINT, sigHandler);
 
-      attachSIGHandler(action, SIGCHLD, SIG_IGN);
-
-      attachSIGHandler(action, SIGBUS, sigBUSHandler);
+      attachSIGHandler(action, SIGUSR1, sigUSR1Handler);
 
       // The args/flags must be checked
       if (checkArgs(argc,argv,&flags) != OK){
@@ -118,7 +116,7 @@ int main(int argc, char * argv[], char * envp[]){
       closedir(dirp);
 
       // Writing subdirectory size to the pipe previously assigned
-      if (isSubDir)
+      if (isChildProcess() == OK)
          write(STDOUT_FILENO,&totalSize,sizeof(long int));
       
       char msg[16];
@@ -155,7 +153,10 @@ int main(int argc, char * argv[], char * envp[]){
    printDirInfo(&flags, totalSize, stdout_fd);
 
    logENTRY(totalSize,flags.path);
-   
+
+   waitForSubprocesses();
+
    logEXIT(OK);
+
    exit(OK);
 }

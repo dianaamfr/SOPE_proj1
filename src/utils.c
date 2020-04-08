@@ -17,6 +17,36 @@
 #include "utils.h"
 #include "logging.h"
 
+extern pid_t gid;
+
+void blockSIGUSR2(){
+
+   sigset_t mask;
+
+   // Temporarily blocking SIGUSR2
+   sigemptyset (&mask);
+   sigaddset (&mask, SIGUSR2);
+
+   // Set new mask
+   sigprocmask(SIG_BLOCK, &mask, NULL);
+}
+
+int pendingSIGUSR2(){
+
+   sigset_t pending_signals;
+   int sig;
+
+   // Checking for pending SIGUSR2
+   if (sigpending(&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR2)){
+      
+      sigwait(&pending_signals,&sig);
+
+      return OK;
+   }
+
+   return ERROR;
+}
+
 void error_sys(char *msg){
 
    fprintf(stderr,"%s\n",msg);
@@ -73,32 +103,35 @@ void flagsToString(flagMask * flags, char * str){
    time);
 }
 
-void blockSIGUSR1(){
+int isChildProcess(){
+   int pid = getpid();
 
-   sigset_t mask;
-
-   // Temporarily blocking SIGUSR1
-   sigemptyset (&mask);
-   sigaddset (&mask, SIGUSR1);
-
-   // Set new mask
-   sigprocmask(SIG_BLOCK, &mask, NULL);
+   if(pid != getParentPid())
+      return OK;
+   
+   return ERROR;
 }
 
-int pendingSIGUSR1(){
+int getParentPid(){
+   return atoi(getenv("SIMPLEDU_PPID"));
+}
 
-   sigset_t pending_signals;
-   int sig;
+void setParentPid(){
 
-   // Checking for pending SIGUSR1
-   if (sigpending(&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1)){
-      // logRECV_SIGNAL(SIGUSR1);
-      sigwait(&pending_signals,&sig);
+   char pidStr[13];
+   int pid = getpid();
+   sprintf(pidStr, "%d", pid);
+   
+   setenv("SIMPLEDU_PPID",pidStr,1);
+}
 
-      return OK;
+void waitForSubprocesses(){
+   // If in the parent of all processes wait for all subprocesses
+   if(!isChildProcess()){
+      int status;
+      unsetenv("SIMPLEDU_PPID");
+      while(waitpid(-gid,&status, 0) > -1){}
    }
-
-   return ERROR;
 }
 
 void sigHandler(int signo){
@@ -106,11 +139,10 @@ void sigHandler(int signo){
    if (signo == SIGINT){ // Ignored by every process except the parent
 
       logRECV_SIGNAL(SIGINT);
-               
-      logSEND_SIGNAL(SIGUSR2, -getpgrp());
-      kill(-getpgrp(), SIGUSR2); // Sending a SIGUSR2 to all child processess
-      
-      printf("\nSTOPPING! - %d - %d\n", getpid(), getppid());
+
+      logSEND_SIGNAL(SIGSTOP, -gid);
+      // Sending a SIGSTOP to all child processess 
+      kill(-gid,SIGSTOP);  
 
       char c;
       printf("Continue? (Y or N) ");
@@ -122,42 +154,32 @@ void sigHandler(int signo){
       if (c == 'Y'){
          printf("CONTINUING! - %d - %d\n", getpid(), getppid());
          
-         logSEND_SIGNAL(SIGCONT,-getpgrp());
-         kill(-getpgrp(),SIGCONT); // Sending a SIGCONT to all processess, including the parent himself
+         logSEND_SIGNAL(SIGCONT,-gid);
+         kill(-gid,SIGCONT); // Sending a SIGCONT to all processess
       }
       else{
          printf("TERMINATING! - %d - %d\n", getpid(), getppid());
          
-         logSEND_SIGNAL(SIGTERM, -getpgrp());
+         logSEND_SIGNAL(SIGTERM, -gid);
          logEXIT(SIGTERM);
-         kill(-getpgrp(), SIGTERM); // Sending a SIGTERM to all processess, including the parent himself
+         kill(-gid, SIGTERM); // Sending a SIGTERM to all processess
+         unsetenv("SIMPLEDU_PPID");
+         kill(getpid(),SIGTERM);
       }
-   }
-
-   if(signo == SIGUSR2){ // Ignored by the parent process only
-      logRECV_SIGNAL(SIGUSR2);    
-
-      logSEND_SIGNAL(SIGSTOP, getpid());    
-      kill(getpid(), SIGSTOP); // Sending a SIGSTOP to all child processess themselves
-   }
-
-   if(signo == SIGBUS){
-      logRECV_SIGNAL(SIGBUS);    
-
-      logSEND_SIGNAL(SIGBUS, getppid());   
-      kill(getppid(), SIGBUS);
    }
 }
 
-void sigBUSHandler(int signo){
-   if (signo == SIGBUS) {
-      logRECV_SIGNAL(SIGBUS); 
+void sigUSR1Handler(int signo){
+   if (signo == SIGUSR1) {
+      logRECV_SIGNAL(SIGUSR1); 
 
       fprintf(stderr, "Max Path Size (%d) exceeded\n", LIMIT_PATH);
       
-      logSEND_SIGNAL(SIGTERM, -getpgrp());
+      logSEND_SIGNAL(SIGTERM, -gid);
+      killpg(gid, SIGTERM); // Sending a SIGTERM to all processess
+      unsetenv("SIMPLEDU_PPID");
+      kill(getpid(),SIGTERM);
       logEXIT(SIGTERM);
-      kill(-getpgrp(), SIGTERM); // Sending a SIGTERM to all processess, including the parent himself
    }
 }
 
@@ -462,7 +484,7 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout_fd){
       }
 
       if (validPathSize(pathname) != OK ){
-         kill(getpid(),SIGBUS);
+         kill(getParentPid(),SIGUSR1);
          logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }
@@ -510,6 +532,9 @@ long int processSubdir(int stdout_fd, flagMask * flags, char * subDirPath){
       error_sys("Fork error!\n");
       
    if (pid > 0){ //PARENT
+
+      gid = pid;
+
       close(fd1[READ]);    // pipe1 (parent -> child) - parent process writes the flags on the pipe1 (do not read)
       close(fd2[WRITE]);   // pipe2 (child -> parent) - parent process reads the child subdirectory size (do not write)
 
@@ -531,6 +556,13 @@ long int processSubdir(int stdout_fd, flagMask * flags, char * subDirPath){
       memset(flags->path,'\0',MAX_PATH);
       strcpy(flags->path,tempPath);
 
+      int status;
+
+      while(true){
+         if (waitpid(pid, &status, 0) == -1) 
+            break;
+      }
+
       // Reading subdirectory size from pipe2
       read(fd2[READ],&subDirSize,sizeof(long int)); 
       close(fd2[READ]);
@@ -540,21 +572,25 @@ long int processSubdir(int stdout_fd, flagMask * flags, char * subDirPath){
       logRECV_PIPE(msg2);
    }
    else{ //CHILD
+      if(getppid() == getParentPid()){
+         if(setpgid(0, 0) != 0)
+            error_sys("setpgid() error\n");
+      }
+
       close(fd1[WRITE]);   // pipe1 (parent -> child) - child process reads the flags from pipe1 (do not write)
       close(fd2[READ]);    // pipe2 (child -> parent) - child process writes the subdirectory size to pipe2 (do not write)
 
       dup2(fd1[READ],STDIN_FILENO); // Performing dup for later reading from pipe1
 
       dup2(fd2[WRITE],STDOUT_FILENO); // Performing dup for later writing to pipe2
-      
-      // logSEND_SIGNAL(SIGUSR1,getpid());
-      kill(getpid(),SIGUSR1); // Identifying this as a child process 
 
+      kill(getpid(),SIGUSR2);
+   
       char stdoutStr[10];
 
       // Converting old stdout descriptor to string to be passed as an argument
       sprintf(stdoutStr , "%d", stdout_fd);
-
+      
       // Finally, executing it all again; Now for another subdirectory
       execl("simpledu", "simpledu", stdoutStr, NULL);
 
@@ -594,8 +630,8 @@ long int searchFiles(DIR * dirp, flagMask * flags, int stdout_fd){
       }
 
       if (validPathSize(pathname) != OK ){
-         logSEND_SIGNAL(SIGBUS,getpid());
-         kill(getpid(),SIGBUS);
+         printf("HERE\n");
+         kill(getParentPid(),SIGUSR1);
          logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }

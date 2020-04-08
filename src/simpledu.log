@@ -1,49 +1,40 @@
-      0.10 - 00029087 -      CREATE - ./simpledu -l ../test/testFolder2 -S --max-depth 3 -B 5 -b
-      0.24 - 00029087 -   SEND_PIPE - 1010_0_0112_../test/testFolder2/D2_1586268638965.707031
-      1.02 - 00029088 -      CREATE - simpledu 3
-      1.06 - 00029088 -   RECV_PIPE - 1010_0_0112_../test/testFolder2/D2_1586268638965.707031
-      1.12 - 00029088 -       ENTRY - 13 at ../test/testFolder2/D2/F2.BIN
-      1.15 - 00029088 -   SEND_PIPE - totalSize = 4109
-      1.16 - 00029087 -   RECV_PIPE - subDirSize = 4109
-      1.19 - 00029088 -       ENTRY - 4109 at ../test/testFolder2/D2
-      1.20 - 00029088 -        EXIT - 0
-      1.25 - 00029087 -   SEND_PIPE - 1010_0_0112_../test/testFolder2/D1_1586268638965.707031
-      1.79 - 00029089 -      CREATE - simpledu 3
-      1.83 - 00029089 -   RECV_PIPE - 1010_0_0112_../test/testFolder2/D1_1586268638965.707031
-      1.93 - 00029089 -   SEND_PIPE - 1010_0_0111_../test/testFolder2/D1/Db_1586268638965.707031
-      2.81 - 00029090 -      CREATE - simpledu 3
-      2.85 - 00029090 -   RECV_PIPE - 1010_0_0111_../test/testFolder2/D1/Db_1586268638965.707031
-      2.97 - 00029090 -   SEND_PIPE - 1010_0_0110_../test/testFolder2/D1/Db/Dx_1586268638965.707031
-      4.22 - 00029091 -      CREATE - simpledu 3
-      4.26 - 00029091 -   RECV_PIPE - 1010_0_0110_../test/testFolder2/D1/Db/Dx_1586268638965.707031
-      4.32 - 00029091 -       ENTRY - 58 at ../test/testFolder2/D1/Db/Dx/link2
-      4.34 - 00029091 -       ENTRY - 11977001 at ../test/testFolder2/D1/Db/Dx/doc.pdf
-      4.36 - 00029091 -       ENTRY - 10 at ../test/testFolder2/D1/Db/Dx/output.log
-      4.39 - 00029091 -   SEND_PIPE - totalSize = 11981165
-      4.40 - 00029090 -   RECV_PIPE - subDirSize = 11981165
-      4.42 - 00029091 -       ENTRY - 11981165 at ../test/testFolder2/D1/Db/Dx
-      4.43 - 00029091 -        EXIT - 0
-      4.45 - 00029090 -       ENTRY - 174 at ../test/testFolder2/D1/Db/archive.zip
-      4.48 - 00029090 -       ENTRY - 37 at ../test/testFolder2/D1/Db/pkg.deb
-      4.51 - 00029090 -   SEND_PIPE - totalSize = 4307
-      4.54 - 00029090 -       ENTRY - 4307 at ../test/testFolder2/D1/Db
-      4.55 - 00029090 -        EXIT - 0
-      4.66 - 00029089 -   RECV_PIPE - subDirSize = 4307
-      4.75 - 00029089 -   SEND_PIPE - 1010_0_0111_../test/testFolder2/D1/Da_1586268638965.707031
-      5.12 - 00029092 -      CREATE - simpledu 3
-      5.16 - 00029092 -   RECV_PIPE - 1010_0_0111_../test/testFolder2/D1/Da_1586268638965.707031
-      5.21 - 00029092 -       ENTRY - 13 at ../test/testFolder2/D1/Da/F3.BIN
-      5.23 - 00029092 -   SEND_PIPE - totalSize = 4109
-      5.24 - 00029089 -   RECV_PIPE - subDirSize = 4109
-      5.26 - 00029092 -       ENTRY - 4109 at ../test/testFolder2/D1/Da
-      5.28 - 00029092 -        EXIT - 0
-      5.28 - 00029089 -       ENTRY - 11 at ../test/testFolder2/D1/dep.d
-      5.31 - 00029089 -       ENTRY - 675 at ../test/testFolder2/D1/src.c
-      5.35 - 00029089 -   SEND_PIPE - totalSize = 4782
-      5.37 - 00029087 -   RECV_PIPE - subDirSize = 4782
-      5.39 - 00029089 -       ENTRY - 4782 at ../test/testFolder2/D1
-      5.41 - 00029089 -        EXIT - 0
-      5.41 - 00029087 -       ENTRY - 38 at ../test/testFolder2/f.txt
-      5.44 - 00029087 -   SEND_PIPE - totalSize = 4134
-      5.47 - 00029087 -       ENTRY - 4134 at ../test/testFolder2
-      5.49 - 00029087 -        EXIT - 0
+      0.40 - 00031920 -      CREATE - ./simpledu
+      0.65 - 00031920 -   SEND_PIPE - 1000_0_0000_./.vscode_1586363467203.377930
+      1.60 - 00031921 -      CREATE - simpledu 3
+      1.66 - 00031921 -   RECV_PIPE - 1000_0_0000_./.vscode_1586363467203.377930
+      1.72 - 00031921 -       ENTRY - 4 at ./.vscode/settings.json
+      1.75 - 00031921 -   SEND_PIPE - totalSize = 8192
+      1.78 - 00031921 -       ENTRY - 8 at ./.vscode
+      1.80 - 00031921 -        EXIT - 0
+      1.96 - 00031920 -   RECV_PIPE - subDirSize = 8192
+      2.14 - 00031920 -   SEND_PIPE - 1000_0_0000_./tests_1586363467203.377930
+      2.83 - 00031922 -      CREATE - simpledu 3
+      2.88 - 00031922 -   RECV_PIPE - 1000_0_0000_./tests_1586363467203.377930
+      2.97 - 00031922 -       ENTRY - 4 at ./tests/searchDir.h
+      2.99 - 00031922 -       ENTRY - 4 at ./tests/testingLogs.c
+      3.01 - 00031922 -       ENTRY - 4 at ./tests/testingStatInfo.c
+      3.03 - 00031922 -       ENTRY - 8 at ./tests/testingStatInfoRecursive.c
+      3.05 - 00031922 -       ENTRY - 8 at ./tests/multiplePathsCode.c
+      3.07 - 00031922 -       ENTRY - 8 at ./tests/testingArgs.c
+      3.08 - 00031922 -       ENTRY - 4 at ./tests/testingSignals.c
+      3.10 - 00031922 -       ENTRY - 8 at ./tests/searchDir.c
+      3.13 - 00031922 -   SEND_PIPE - totalSize = 53248
+      3.15 - 00031922 -       ENTRY - 52 at ./tests
+      3.18 - 00031922 -        EXIT - 0
+      3.32 - 00031920 -   RECV_PIPE - subDirSize = 53248
+      3.40 - 00031920 -       ENTRY - 4 at ./notes.md
+      3.43 - 00031920 -       ENTRY - 4 at ./simpledu.log
+      3.45 - 00031920 -       ENTRY - 4 at ./types.h
+      3.47 - 00031920 -       ENTRY - 4 at ./logging.c
+      3.49 - 00031920 -       ENTRY - 12 at ./utils.h
+      3.51 - 00031920 -       ENTRY - 36 at ./simpledu
+      3.53 - 00031920 -       ENTRY - 8 at ./simpledu.c
+      3.56 - 00031920 -       ENTRY - 4 at ./logging.h
+      3.58 - 00031920 -       ENTRY - 24 at ./utils.c
+      3.60 - 00031920 -       ENTRY - 4 at ./testeT_du.txt
+      3.62 - 00031920 -       ENTRY - 4 at ./simpledu.h
+      3.64 - 00031920 -       ENTRY - 4 at ./testeT_simpledu.txt
+      3.66 - 00031920 -       ENTRY - 4 at ./Makefile
+      3.69 - 00031920 -   SEND_PIPE - totalSize = 184320
+      3.74 - 00031920 -       ENTRY - 180 at .
+      3.76 - 00031920 -        EXIT - 0
