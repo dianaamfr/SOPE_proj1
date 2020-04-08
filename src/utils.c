@@ -531,6 +531,13 @@ long int processSubdir(int stdout_fd, flagMask * flags, char * subDirPath){
       memset(flags->path,'\0',MAX_PATH);
       strcpy(flags->path,tempPath);
 
+      int status;
+
+      while(true){
+         if (waitpid(pid, &status, 0) == -1) 
+            break;
+      }
+
       // Reading subdirectory size from pipe2
       read(fd2[READ],&subDirSize,sizeof(long int)); 
       close(fd2[READ]);

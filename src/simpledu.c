@@ -68,8 +68,6 @@ int main(int argc, char * argv[], char * envp[]){
 
       attachSIGHandler(action, SIGINT, sigHandler);
 
-      attachSIGHandler(action, SIGCHLD, SIG_IGN);
-
       attachSIGHandler(action, SIGBUS, sigBUSHandler);
 
       // The args/flags must be checked
