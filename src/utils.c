@@ -161,9 +161,12 @@ void sigHandler(int signo){
          printf("TERMINATING! - %d - %d\n", getpid(), getppid());
          
          logSEND_SIGNAL(SIGTERM, -gid);
-         logEXIT(SIGTERM);
          kill(-gid, SIGTERM); // Sending a SIGTERM to all processess
+         
          unsetenv("SIMPLEDU_PPID");
+
+         logSEND_SIGNAL(SIGTERM, getpid());
+         logEXIT(SIGTERM);
          kill(getpid(),SIGTERM);
       }
    }
@@ -177,9 +180,12 @@ void sigUSR1Handler(int signo){
       
       logSEND_SIGNAL(SIGTERM, -gid);
       killpg(gid, SIGTERM); // Sending a SIGTERM to all processess
-      unsetenv("SIMPLEDU_PPID");
-      kill(getpid(),SIGTERM);
+
+      unsetenv("SIMPLEDU_PPID");   
+
+      logSEND_SIGNAL(SIGTERM, getpid());
       logEXIT(SIGTERM);
+      kill(getpid(),SIGTERM);
    }
 }
 
@@ -296,7 +302,7 @@ int checkArgs(int argc, char * argv[], flagMask * flags){
             // printf("option b\n");
             tempFlags.b = 1;
 
-            if(tempFlags.B){ //if -B SIZE ... -b assume -b (the last option is assumed) => disable -B 
+            if(tempFlags.B){ // If -B SIZE ... -b assume -b (the last option is assumed) => disable -B 
                tempFlags.size = 0;
                tempFlags.B = 0;
             }
@@ -408,7 +414,7 @@ void removeDuplicateBar(char * path){
          return;
    }
    
-   // If path if of the type .///
+   // If path if of the type ./
    if (path[0] == '.'){
       memset(path, 0, MAX_PATH);
       strcpy(path, ".");
@@ -484,7 +490,9 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout_fd){
       }
 
       if (validPathSize(pathname) != OK ){
+         logSEND_SIGNAL(SIGUSR1,getParentPid());
          kill(getParentPid(),SIGUSR1);
+
          logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }
@@ -584,6 +592,7 @@ long int processSubdir(int stdout_fd, flagMask * flags, char * subDirPath){
 
       dup2(fd2[WRITE],STDOUT_FILENO); // Performing dup for later writing to pipe2
 
+      logSEND_SIGNAL(SIGUSR2,getpid());
       kill(getpid(),SIGUSR2);
    
       char stdoutStr[10];
@@ -630,8 +639,9 @@ long int searchFiles(DIR * dirp, flagMask * flags, int stdout_fd){
       }
 
       if (validPathSize(pathname) != OK ){
-         printf("HERE\n");
+         logSEND_SIGNAL(SIGUSR1,getParentPid());
          kill(getParentPid(),SIGUSR1);
+
          logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }

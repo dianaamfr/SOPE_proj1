@@ -1,6 +1,6 @@
 /**
  * @file utils.h
- * @author SOPE Group 
+ * @author SOPE T02G05 
  * @date 20 March 2020
  * @brief File containing utilities' headers and constants
  */
@@ -78,7 +78,7 @@ void waitForSubprocesses();
 
 /**
  * @brief Signal Handler for assigned signals SIGINT and SIGUSR1
- * Only those two have this handler attached, but many more have a part in the job
+ * Only those two have this handler attached, but some more have a part in the job
  * Naming them all: 
  * SIGINT   - for user interaction
  * SIGSTOP  - for stopping all processess from the process group
@@ -87,9 +87,9 @@ void waitForSubprocesses();
  * It works as simples as this: 
  * User sends SIGINT by pressing Ctrl+C.
  * It is firstly ignored by all processes, except by the parent of all processes.
- * When the parent of all processes receives the SIGINT, it sends a SIGSTOP
- * to the processess from the group of all other subprocesses.
- * The parent, now, waits for the user decision of continuing, 
+ * When the parent receives the SIGINT, it sends a SIGSTOP
+ * to the group where all other subprocesses now reside.
+ * The parent, then, waits for the user decision of continuing, 
  * sending a SIGCONT to all, or terminating, sending a SIGTERM.
  * @param signo signal received
 */

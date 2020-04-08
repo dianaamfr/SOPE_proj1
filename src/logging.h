@@ -1,6 +1,6 @@
 /**
  * @file logging.h
- * @author SOPE Group 
+ * @author SOPE T02G05 
  * @date 20 March 2020
  * @brief File containing logging' API headers and constants
  */

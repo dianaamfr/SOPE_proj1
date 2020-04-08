@@ -1,10 +1,8 @@
 /**
  * @file simpledu.h
- * @author SOPE Group 
+ * @author SOPE T02G05 
  * @date 20 March 2020
  * @brief File containing simpledu headers 
- * @see http://fnch.users.sourceforge.net/doxygen_c.html
- * @see https://wiki.scilab.org/Doxygen%20documentation%20Examples for more information.
  */
 
 #ifndef SIMPLEDU
