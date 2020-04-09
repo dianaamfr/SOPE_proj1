@@ -1,17 +1,13 @@
 #include <string.h>
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <getopt.h> 
 #include <math.h>
+#include <stdbool.h>
+#include <getopt.h> 
 #include <sys/types.h>
 #include <ctype.h>
 #include <unistd.h> 
 #include <sys/wait.h>
-#include <errno.h>
 #include <signal.h>
 #include "types.h"
 #include "utils.h"
@@ -92,7 +88,7 @@ int pendingSIGUSR1(){
 
    // Checking for pending SIGUSR1
    if (sigpending(&pending_signals) == 0 && sigismember (&pending_signals, SIGUSR1)){
-      // logRECV_SIGNAL(SIGUSR1);
+
       sigwait(&pending_signals,&sig);
 
       return OK;
@@ -274,7 +270,7 @@ int checkArgs(int argc, char * argv[], flagMask * flags){
             // printf("option b\n");
             tempFlags.b = 1;
 
-            if(tempFlags.B){ //if -B SIZE ... -b assume -b (the last option is assumed) => disable -B 
+            if(tempFlags.B){ // If -B SIZE ... -b assume -b (the last option is assumed) => disable -B 
                tempFlags.size = 0;
                tempFlags.B = 0;
             }
@@ -386,7 +382,7 @@ void removeDuplicateBar(char * path){
          return;
    }
    
-   // If path if of the type .///
+   // If path if of the type ./ or /
    if (path[0] == '.'){
       memset(path, 0, MAX_PATH);
       strcpy(path, ".");
@@ -462,7 +458,9 @@ long int searchSubdirs(DIR * dirp, flagMask * flags, int stdout_fd){
       }
 
       if (validPathSize(pathname) != OK ){
+         logSEND_SIGNAL(SIGBUS,getpid());
          kill(getpid(),SIGBUS);
+
          logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }
@@ -603,6 +601,7 @@ long int searchFiles(DIR * dirp, flagMask * flags, int stdout_fd){
       if (validPathSize(pathname) != OK ){
          logSEND_SIGNAL(SIGBUS,getpid());
          kill(getpid(),SIGBUS);
+
          logEXIT(ERRORARGS);
          exit(ERRORARGS);
       }
