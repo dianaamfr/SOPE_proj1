@@ -1,17 +1,13 @@
 #include <string.h>
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <getopt.h> 
 #include <math.h>
+#include <stdbool.h>
+#include <getopt.h> 
 #include <sys/types.h>
 #include <ctype.h>
 #include <unistd.h> 
 #include <sys/wait.h>
-#include <errno.h>
 #include <signal.h>
 #include "types.h"
 #include "utils.h"
@@ -318,12 +314,12 @@ int checkArgs(int argc, char * argv[], flagMask * flags){
                return ERRORARGS;
             }
 
-            if (size_b == 1 && tempFlags.b){ //if -B 1 and -b 1, then assume -b (order is irrelevant)
+            if (size_b == 1 && tempFlags.b){ // If -B 1 and -b 1, then assume -b (order is irrelevant)
                tempFlags.size = 0;
                tempFlags.B = 0;
             }
             else 
-               tempFlags.size = size_b; //if -b is not active 
+               tempFlags.size = size_b; // If -b is not active 
 
             break;
 
@@ -414,7 +410,7 @@ void removeDuplicateBar(char * path){
          return;
    }
    
-   // If path if of the type ./
+   // If path if of the type ./ or /
    if (path[0] == '.'){
       memset(path, 0, MAX_PATH);
       strcpy(path, ".");

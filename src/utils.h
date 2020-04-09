@@ -115,6 +115,11 @@ void attachSIGHandler(struct sigaction action, int SIG, __sighandler_t handler);
 
 /**
  * @brief Check if the @p do not exceeds the LIMIT_PATH size
+ * A memory error raised by the gcc compiler terminated some processes
+ * due to the fact that some path strings exceeded the maximum allowed.
+ * A solution to this was to notify the parent to terminate immediately
+ * sending a signal in cascade backwards - the SIGUSR1 (randomly choosen), 
+ * until it reaches the parent.
  * @param path path to be checked
  * @return OK if not exceeded, ERRORARGS otherwise
 */

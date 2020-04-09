@@ -7,7 +7,7 @@ SOPE T02G05
 
 **SIMPLEDU**
 A simple version of the LINUX “du” (Disk Usage), a standard Unix/Linux command, used to check the information of disk usage of files and directories on a machine.
-[About du...](http://man7.org/linux/man-pages/man1/du.1.html)
+[Mais sobre o comando `du`](http://man7.org/linux/man-pages/man1/du.1.html)
 
 #### Report
 >------
