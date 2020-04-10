@@ -267,7 +267,7 @@ pre[data-line] .line-highlight[data-end]:after {
 <h3 class="mume-header" id="project-1">Project 1</h3>
 
 <p><strong>SIMPLEDU</strong><br>
-A simple version of the LINUX &#x201C;du&#x201D; (Disk Usage), a standard Unix/Linux command, used to check the information of disk usage of files and directories on a machine.<br>
+A simple version of the LINUX <code>du</code> (Disk Usage), a standard Unix/Linux command, used to check the information of disk usage of files and directories on a machine.<br>
 <a href="http://man7.org/linux/man-pages/man1/du.1.html">Mais sobre o comando <code>du</code></a></p>
 <h4 class="mume-header" id="report">Report</h4>
 
@@ -280,16 +280,17 @@ A simple version of the LINUX &#x201C;du&#x201D; (Disk Usage), a standard Unix/L
 <h5 class="mume-header" id="requisitos-funcionais-ok">Requisitos Funcionais - <em>OK</em></h5>
 
 <p>A leitura dos argumentos da linha de comandos est&#xE1; implementada, tanto na vers&#xE3;o simples, como na vers&#xE3;o longa das op&#xE7;&#xF5;es.<br>
-Todas as op&#xE7;&#xF5;es de invoca&#xE7;&#xE3;o se encontram funcionais e, quando detetadas, s&#xE3;o guardadas numa m&#xE1;scara de flags para posterior uso, na apresenta&#xE7;&#xE3;o dos resultados.</p>
+Todas as op&#xE7;&#xF5;es de invoca&#xE7;&#xE3;o se encontram funcionais e, quando detetadas, s&#xE3;o guardadas numa m&#xE1;scara de flags para posterior uso, na apresenta&#xE7;&#xE3;o dos resultados.<br>
+Procuramos, para al&#xE9;m disso, apresentar o tamanho correto, mesmo quando s&#xE3;o usadas flags repetidas e/ou em conjunto, mas por ordens diferentes (por exemplo, a conjuga&#xE7;&#xE3;o das op&#xE7;&#xF5;es <code>-b</code> e <code>-B &lt;size&gt;</code>)</p>
 <h5 class="mume-header" id="apresenta%C3%A7%C3%A3o-de-resultados-ok">Apresenta&#xE7;&#xE3;o de resultados - <em>OK</em></h5>
 
 <p>O formato de sa&#xED;da do <code>du</code> foi replicado corretamente.</p>
 <h5 class="mume-header" id="gera%C3%A7%C3%A3o-de-registos-de-execu%C3%A7%C3%A3o-ok">Gera&#xE7;&#xE3;o de registos de execu&#xE7;&#xE3;o - <em>OK</em></h5>
 
-<p>A cria&#xE7;&#xE3;o e termina&#xE7;&#xE3;o de processos, envio e rece&#xE7;&#xE3;o de sinais e de dados atrav&#xE9;s de pipes, e, os ficheiros e diret&#xF3;rios analisados por cada processo s&#xE3;o, a todo o momento, catalogadas num ficheiro de <em>logs</em>, cujo caminho &#xE9; guardado na vari&#xE1;vel de ambiente LOG_FILENAME.</p>
+<p>A cria&#xE7;&#xE3;o e termina&#xE7;&#xE3;o de processos, envio e rece&#xE7;&#xE3;o de sinais e de dados atrav&#xE9;s de pipes, e os ficheiros e diret&#xF3;rios analisados por cada processo s&#xE3;o opera&#xE7;&#xF5;es, a todo o momento, catalogadas num ficheiro de <em>logs</em>, cujo caminho &#xE9; guardado na vari&#xE1;vel de ambiente <strong>LOG_FILENAME</strong>.</p>
 <h5 class="mume-header" id="interrup%C3%A7%C3%A3o-pelo-utilizador-ok">Interrup&#xE7;&#xE3;o pelo utilizador - <em>OK</em></h5>
 
-<p>Os sinais s&#xE3;o tratados com a mesma finalidade exposta no enunciado do projeto, estando o mecanismo completamente funcional. Os detalhes de implementa&#xE7;&#xE3;o deste mecanismo est&#xE3;o descritos em mais profundidade no &#xFA;ltimo ponto, com uma estrat&#xE9;gia alternativa para lidar com o envio dos sinais a todos os processos filho.</p>
+<p>Os sinais s&#xE3;o tratados com a mesma finalidade exposta no enunciado do projeto, estando o mecanismo completamente funcional. Os detalhes de implementa&#xE7;&#xE3;o deste mecanismo est&#xE3;o descritos em maior profundidade no &#xFA;ltimo ponto, numa estrat&#xE9;gia alternativa para lidar com o envio dos sinais a todos os processos filho.</p>
 <h5 class="mume-header" id="requisitos-arquiteturais-ok">Requisitos Arquiteturais - <em>OK</em></h5>
 
 <p>Cada processo analisa apenas um diret&#xF3;rio e seus constituintes, criando processos para os seus subdiret&#xF3;rios, que executam, de novo, o mesmo c&#xF3;digo do programa <code>simpledu</code>, para a respetiva pasta.<br>
@@ -303,8 +304,40 @@ Estas comunica&#xE7;&#xF5;es entre processos usam sempre pipes (sem nome).</p>
 <blockquote>
 <p><em>Que erros de imprecis&#xE3;o de contas sabem que podem existir (p.ex. diferentes comportamentos entre os computadores que usaram para testar)</em></p>
 </blockquote>
-<p>Isto aqui n&#xE3;o sei bem o que falar.<br>
-O meu computador tinha um comportamento diferente, mas eu n&#xE3;o sei explicar bem o motivo.</p>
+<h5 class="mume-header" id="an%C3%A1lise-do-comportamento-do-comando-du-nos-computadores-dos-diferentes-elementos-do-grupo">An&#xE1;lise do comportamento do comando <code>du</code> nos computadores dos diferentes elementos do grupo</h5>
+
+<p>Nos computadores de dois dos elementos do grupo, verificamos um comportamento id&#xEA;ntico, no que diz respeito ao resultados apresentados pelo comando <code>du</code>.<br>
+No entanto, um de n&#xF3;s detetou que o comando <code>du</code> apresentava valores diferentes em v&#xE1;rios casos:</p>
+<ul>
+<li>Por exemplo, quando todos os ficheiros <code>.c</code> de um certo diret&#xF3;rio apresentavam tamanho &quot;4&quot;, utlizando o comando <code>du</code> sem flags, o ficheiro <code>.h</code> apresentava tamanho &quot;1&quot;. No caso dos restantes elementos do grupo, para o mesmo diret&#xF3;rio, os valores dos ficheiros <code>.c</code> e <code>.h</code> eram todos de &quot;4&quot;.</li>
+<li>Tamb&#xE9;m em bytes, o comando <code>du</code> apresentava tamanhos distintos para esse elemento do grupo.</li>
+</ul>
+<p>Tendo em conta que n&#xE3;o se detetou a raz&#xE3;o pela qual os valores apresentados nesse computador eram diferentes (que &#xE9; mais antigo que os dos restantes membros do grupo), optou-se por se basear o c&#xE1;lculo dos valores naquilo que &#xE9; apresentado pelo <code>du</code>, nos computadores da maioria dos elementos do grupo.</p>
+<h5 class="mume-header" id="c%C3%A1lculo-dos-valores-apresentados">C&#xE1;lculo dos valores apresentados</h5>
+
+<p>O c&#xE1;lculo do tamanho ocupado pelos ficheiros/subdiret&#xF3;rios em disco utiliza a <code>struct stat</code> para obter todos os valores relevantes, entre os quais:</p>
+<ul>
+<li>o tamanho real em bytes (<code>-b</code>) de espa&#xE7;o ocupado em disco por um dado ficheiro/subdiret&#xF3;rio (dispon&#xED;vel no campo <code>st_size</code>)</li>
+<li>o tamanho em blocos de 512 bytes ocupado em disco por um dado ficheiro/subdiret&#xF3;rio (dispon&#xED;vel no campo <code>st_blocks</code>)</li>
+</ul>
+<p>A partir dos valores anteriores, nos casos em que se pretende obter o tamanho em blocos, em particular, quando &#xE9; utilizada a flag <code>-B &lt;size&gt;</code>, ou quando &#xE9; utilizado o comando sem quaisquer flags (blocos de 1024 bytes), o c&#xE1;lculo utiliza a seguinte f&#xF3;rmula para obter o n&#xFA;mero de blocos de tamanho indicado no argumento:</p>
+<ol>
+<li>
+<p>O valor em blocos &#xE9; convertido em bytes<br>
+<code>bytesSize = stat_buf-&gt;st_blocks * 512</code></p>
+</li>
+<li>
+<p>No caso de estarmos perante um subdiret&#xF3;rio, ou ficheiro de um (sub)diret&#xF3;rio, &#xE9; somado o valor anterior ao tamanho total do subdiret&#xF3;rio, pois a convers&#xE3;o do tamanho do seu subdiret&#xF3;rio, consoante o tamanho dos blocos a apresentar, s&#xF3; pode ser feita no fim</p>
+</li>
+<li>
+<p>Se a flag <code>-a</code> estiver ativa, o tamanho de um ficheiro &#xE9; apresentado com o n&#xBA; de blocos especificado atrav&#xE9;s do c&#xE1;lculo do <em>ceil</em> da divis&#xE3;o do n&#xBA; de bytes calculado em 1 pelo <code>size</code>, ou por 1024, no caso de n&#xE3;o serem especificadas flags, isto &#xE9;,</p>
+<pre data-role="codeBlock" data-info="c" class="language-c"><span class="token keyword">if</span><span class="token punctuation">(</span>bytesSize <span class="token operator">%</span> blockSize <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+   <span class="token keyword">return</span> bytesSize <span class="token operator">/</span> blockSize<span class="token punctuation">;</span>
+<span class="token keyword">else</span>
+   <span class="token keyword">return</span> bytesSize <span class="token operator">/</span> blockSize <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+</pre></li>
+</ol>
+<p>Para links simb&#xF3;licos, quando est&#xE1; ativa a flag <code>-L</code>, o valor apresentado &#xE9; obtido usando, para esses casos, a fun&#xE7;&#xE3;o <code>int stat(const char *pathname, struct stat *statbuf)</code>, em vez da utilizada quando <code>-L</code> n&#xE3;o est&#xE1; ativa: <code>int lstat(const char *pathname, struct stat *statbuf)</code>; sendo que, no caso de o tamanho ser pedido em blocos, o link simb&#xF3;lico apresenta, normalmente, tamanho nulo (a n&#xE3;o ser que seja pedido, especificamente, o tamanho desse ficheiro em particular, ao inv&#xE9;s de ser pedido o tamanho total de um diret&#xF3;rio).</p>
 <br>
 <br>
 <blockquote>
@@ -319,7 +352,7 @@ O meu computador tinha um comportamento diferente, mas eu n&#xE3;o sei explicar 
 Nota: ver <code>utils.h</code> para mais pormenores, documenta&#xE7;&#xE3;o e cr&#xE9;ditos.</p>
 <h5 class="mume-header" id="gera%C3%A7%C3%A3o-de-registos-de-execu%C3%A7%C3%A3o">Gera&#xE7;&#xE3;o de registos de execu&#xE7;&#xE3;o</h5>
 
-<p>Os registos de <em>log</em> s&#xE3;o guardados num ficheiro comum que permite verificar a ordem temporal e o conte&#xFA;do das diversas opera&#xE7;&#xF5;es realizadas. Para otimizar tal efeito, foi criada uma esp&#xE9;cie de API, nos ficheiros <code>logging.c</code> e <code>logging.h</code> com as diversas op&#xE7;&#xF5;es/fun&#xE7;&#xF5;es de registo. Existe uma vari&#xE1;vel global que guarda apenas o instante inicial de execu&#xE7;&#xE3;o do programa e que &#xE9; necess&#xE1;ria em todos os processos, por forma a calcular o tempo decorrido, sendo o seu valor, por isso mesmo, partilhado pelo processo pai e inicializado com a cria&#xE7;&#xE3;o de cada processo filho.</p>
+<p>Os registos de <em>log</em> s&#xE3;o guardados num ficheiro comum, que permite verificar a ordem temporal e o conte&#xFA;do das diversas opera&#xE7;&#xF5;es realizadas. Para otimizar tal efeito, foi criada uma esp&#xE9;cie de API, nos ficheiros <code>logging.c</code> e <code>logging.h</code>, com as diversas op&#xE7;&#xF5;es/fun&#xE7;&#xF5;es de registo. Existe uma vari&#xE1;vel global que guarda apenas o instante inicial de execu&#xE7;&#xE3;o do programa e que &#xE9; necess&#xE1;ria em todos os processos, por forma a calcular o tempo decorrido. O seu valor, por isso mesmo, &#xE9; partilhado pelo processo pai e inicializado com a cria&#xE7;&#xE3;o de cada processo filho.</p>
 <h5 class="mume-header" id="interrup%C3%A7%C3%A3o-pelo-utilizador">Interrup&#xE7;&#xE3;o pelo utilizador</h5>
 
 <blockquote>
@@ -375,19 +408,63 @@ Nota: ver <code>utils.h</code> para mais pormenores, documenta&#xE7;&#xE3;o e cr
       <span class="token function">kill</span><span class="token punctuation">(</span><span class="token function">getpid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> SIGSTOP<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Sending a SIGSTOP to all child processess themselves</span>
    <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
-</pre><p>O mecanismo funciona de forma a disfar&#xE7;ar o SIGSTOP de SIGUSR2, para que o pai o envie a todos os filhos sem se parar a ele pr&#xF3;prio, dentro do seu grupo de processos. Ou seja, o pai n&#xE3;o envia explicitamente um SIGSTOP a todos os filhos, manda sim um SIGUSR2 a todos os filhos e estes param-se a si pr&#xF3;prios. O efeito &#xE9; o mesmo, tendo as vantagens de n&#xE3;o precisarmos de guardar registos dos pids dos filhos todos em arrays, ou outras solu&#xE7;&#xF5;es que envolvam mais coisas al&#xE9;m dos pids de cada um dos processos e dentro do mesmo grupo de processos.</p>
+</pre><p>Isto funciona de forma a disfar&#xE7;ar o SIGSTOP de SIGUSR2, para que o pai o envie a todos os filhos sem se parar a ele pr&#xF3;prio, dentro do seu grupo de processos. Ou seja, o pai n&#xE3;o envia explicitamente um SIGSTOP a todos os filhos, manda sim um SIGUSR2 a todos os filhos e estes param-se a si pr&#xF3;prios. O efeito &#xE9; o mesmo, tendo as vantagens de n&#xE3;o precisarmos de guardar registos dos pids dos filhos todos em arrays, ou outras solu&#xE7;&#xF5;es que envolvam mais coisas al&#xE9;m dos pids de cada um dos processos e dentro do mesmo grupo de processos.</p>
 <p>Assume-se, no entanto e por fim, que este mecanismo apenas n&#xE3;o cumpre escrupulosamente a declara&#xE7;&#xE3;o <code>&quot;o processo-pai deve enviar um sinal SIGSTOP a todos os processos-filho&quot;</code>, se interpretada na sua literalidade, no &#xFA;nico sentido em que o SIGSTOP n&#xE3;o &#xE9; enviado diretamente aos filhos.</p>
-<h5 class="mume-header" id="outros-aspetos">Outros Aspetos</h5>
+<h5 class="mume-header" id="bloqueio-de-sinais-para-detetar-subprocessos">Bloqueio de sinais para detetar subprocessos</h5>
 
-<p><code>** stack smashing detected **</code> era um problema recorrente, quando analisando diret&#xF3;rios com caminhos/nomes (strings) mais longos que o limite - 256. Para impedir a perda de informa&#xE7;&#xE3;o, e, por consequ&#xEA;ncia, a incorreta apresenta&#xE7;&#xE3;o da informa&#xE7;&#xE3;o final, foi implementado um simples mecanismo de aviso e termina&#xE7;&#xE3;o do programa. Assim que um processo filho deteta um tamanho ilegal, que ultrapasse o limite imposto pelo compilador, envia um sinal ao seu processo pai e este sinal &#xE9; replicado na dire&#xE7;&#xE3;o inversa (<em>casdade</em>) at&#xE9; chegar ao processo pai de todos, que notifica o utilizador e termina os c&#xE1;lculos. A implementa&#xE7;&#xE3;o detalhada encontra-se na fun&#xE7;&#xE3;o <code>main</code> do programa, no handler associado ao sinal usado e na fun&#xE7;&#xE3;o <code>int validPathSize(char * path);</code> do ficheiro <code>utils.c</code>.</p>
+<blockquote>
+<p><em>Com base em informa&#xE7;&#xE3;o obtida em <a href="https://www.gnu.org/software/libc/manual/html_node/Process-Signal-Mask.html">https://www.gnu.org/software/libc/manual/html_node/Process-Signal-Mask.html</a></em></p>
+</blockquote>
+<p>Existem comportamentos que se pretende que sejam exclusivos do primeiro processo de todos, entre os quais:</p>
+<ul>
+<li>a leitura das <code>flags</code> e do <code>path</code>, que n&#xE3;o deve ser efetuada pelos subprocessos (os subprocessos recebem as flags enviadas no pipe, lendo apenas um descritor dos argumentos)</li>
+<li>a forma como lida com a rece&#xE7;&#xE3;o dos sinais, em particular o <code>SIGINT</code> e, por isso, os <code>signal handlers</code> que lhe est&#xE3;o associados s&#xE3;o diferentes dos restantes processos</li>
+<li>...</li>
+</ul>
+<p>Por estas quest&#xF5;es de exclusividade no comportamento dos diversos processos, optamos por utilizar uma estrat&#xE9;gia baseada no bloqueio de um sinal (<code>SIGUSR1</code>), enviado pelos subprocessos a eles pr&#xF3;prios.<br>
+Evitamos, assim, utilizar mais uma vari&#xE1;vel ambiente para guardar informa&#xE7;&#xE3;o que servisse apenas para identificar o primeiro processo (o seu <code>pid</code>, ou, eventualmente, o seu <code>ppid</code>).</p>
+<p>Inicialmente, utiliza-se a fun&#xE7;&#xE3;o <code>blockSIGUSR1</code> para bloquear o sinal, em todos os processos:</p>
+<pre data-role="codeBlock" data-info="c" class="language-c"><span class="token keyword">void</span> <span class="token function">blockSIGUSR1</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+
+   sigset_t mask<span class="token punctuation">;</span>
+
+   <span class="token comment">// Temporarily blocking SIGUSR1</span>
+   <span class="token function">sigemptyset</span> <span class="token punctuation">(</span><span class="token operator">&amp;</span>mask<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">sigaddset</span> <span class="token punctuation">(</span><span class="token operator">&amp;</span>mask<span class="token punctuation">,</span> SIGUSR1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+   <span class="token comment">// Set new mask</span>
+   <span class="token function">sigprocmask</span><span class="token punctuation">(</span>SIG_BLOCK<span class="token punctuation">,</span> <span class="token operator">&amp;</span>mask<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</pre><p>Sempre que &#xE9; criado um novo processo filho, atrav&#xE9;s da chamada <code>fork()</code>, o filho envia o sinal <code>SIGUSR1</code> a ele pr&#xF3;prio, antes do <code>exec()</code>:<br>
+<code>kill(getpid(),SIGUSR1)</code>.<br>
+Assim, ao iniciar um processo, como o sinal &#xE9; sempre bloqueado, vai existir um sinal pendente <code>SIGUSR1</code>, em todos os subprocessos, o que nos permite distinguir o primeiro processo de todos, o &#xFA;nico que n&#xE3;o ter&#xE1; esse sinal pendente.</p>
+<p>A verifica&#xE7;&#xE3;o da sua exist&#xEA;ncia &#xE9; realizada atrav&#xE9;s da seguinte fun&#xE7;&#xE3;o, que, no caso de existir um sinal <code>SIGUSR1</code> pendente, o remove da lista de sinais pendentes:</p>
+<pre data-role="codeBlock" data-info="c" class="language-c"><span class="token keyword">int</span> <span class="token function">pendingSIGUSR1</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+
+   sigset_t pending_signals<span class="token punctuation">;</span>
+   <span class="token keyword">int</span> sig<span class="token punctuation">;</span>
+
+   <span class="token comment">// Checking for pending SIGUSR1</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">sigpending</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pending_signals<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> <span class="token function">sigismember</span> <span class="token punctuation">(</span><span class="token operator">&amp;</span>pending_signals<span class="token punctuation">,</span> SIGUSR1<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+
+      <span class="token function">sigwait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pending_signals<span class="token punctuation">,</span><span class="token operator">&amp;</span>sig<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">return</span> OK<span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+
+   <span class="token keyword">return</span> ERROR<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</pre><h5 class="mume-header" id="outros-aspetos">Outros Aspetos</h5>
+
+<p><code>** stack smashing detected **</code> era um problema recorrente, quando analisando diret&#xF3;rios com caminhos/nomes (strings) mais longos que o limite - 256. Para impedir a perda de informa&#xE7;&#xE3;o, e, por consequ&#xEA;ncia, a incorreta apresenta&#xE7;&#xE3;o da informa&#xE7;&#xE3;o final, foi implementado um simples mecanismo de aviso e termina&#xE7;&#xE3;o do programa. Assim que um processo filho deteta um tamanho ilegal, que ultrapasse o limite imposto pelo compilador, envia um sinal ao seu processo pai e este sinal &#xE9; replicado na dire&#xE7;&#xE3;o inversa (<em>cascade</em>), at&#xE9; chegar ao processo pai de todos, que notifica o utilizador e termina os c&#xE1;lculos. A implementa&#xE7;&#xE3;o detalhada encontra-se na fun&#xE7;&#xE3;o <code>main</code> do programa, no handler associado ao sinal usado e na fun&#xE7;&#xE3;o <code>int validPathSize(char * path);</code> do ficheiro <code>utils.c</code>.</p>
 <h4 class="mume-header" id="authors">Authors</h4>
 
 <blockquote>
 <hr>
 </blockquote>
-<p>Diana Freitas - <a href="mailto:oteuemailbonitodaup">upblblbla</a></p>
+<p>Diana Freitas - <a href="mailto:up201806230@fe.up.pt">up201806230</a></p>
 <p>Eduardo Brito - <a href="mailto:up201806271@fe.up.pt">up201806271</a></p>
-<p>Maria Ba&#xED;a - <a href="mailto:oteuemailbonitodaup">upblblbla</a></p>
+<p>Maria Ba&#xED;a - <a href="mailto:up201704951@fe.up.pt">up201704951</a></p>
 
       </div>
       
